@@ -13,7 +13,7 @@ type AuthState = {
 
 const initialState = {
   value: {
-    isAuth: false,
+    isAuth: true,
     username: 'Sery Vathana',
     userID: '',
     isModerator: false,
