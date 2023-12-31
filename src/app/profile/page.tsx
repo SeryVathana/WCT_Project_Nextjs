@@ -43,7 +43,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import CreatePost from '@/components/CreatePost';
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
@@ -74,9 +73,7 @@ const Profile = () => {
 const ProfileTab = () => {
   return (
     <div className='mt-5 grid grid-cols-2 '>
-      <div className=' col-span-2 md:col-span-1 order-2 md:order-1 pr-5 md:border-r md:border-gray-300'>
-        <CreatePost />
-      </div>
+      <div className=' col-span-2 md:col-span-1 order-2 md:order-1 pr-5 md:border-r md:border-gray-300'></div>
       <div className='col-span-2 md:col-span-1 order-1 md:order-2 mb-10 md:ml-5 py-10 md:py-0 border-b border-b-gray-300 md:border-none'>
         <Table>
           <TableHeader>

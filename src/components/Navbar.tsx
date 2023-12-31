@@ -108,7 +108,9 @@ const Navbar = () => {
                     <DropdownMenuItem onClick={() => router.push('/profile')}>
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled>Setting</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/create-post')}>
+                      Create Post
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {

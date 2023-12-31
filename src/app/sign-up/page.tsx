@@ -5,39 +5,24 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
-import { Calendar as CalendarIcon } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useEffect, useState } from 'react';
-import { log } from 'console';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+
+const formSchema = z.object({
+  firstname: z.string().min(2).max(10),
+  lastname: z.string().min(2).max(10),
+  email: z.string().email(),
+  password: z.string().min(6, 'Password must be 6 or more characters.'),
+  phonenumber: z.string().min(6, 'Invalid phone number'),
+  birthdate: z.string().refine((date) => new Date(date).getFullYear() <= 2023 - 18, {
+    message: 'You must be 18 or above to join bidding.',
+  }),
+});
 
 const SignUp = () => {
-  const formSchema = z.object({
-    firstname: z.string().min(2).max(10),
-    lastname: z.string().min(2).max(10),
-    email: z.string().email(),
-    password: z.string().min(6),
-    phonenumber: z.string().min(6),
-    birthdate: z.string().refine((date) => new Date(date).getFullYear() <= 2023 - 18, {
-      message: 'You must be 18 or above to join bidding.',
-    }),
-  });
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {

@@ -6,26 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import Image from 'next/image';
 
@@ -59,7 +45,7 @@ const ItemDetails = ({ params }: { params: { itemId: string } }) => {
     <MaxWidthWrapper className='my-10 grid grid-cols-2 gap-2 md:gap-5'>
       <ImageSlider slides={slides} />
       <div className='col-span-2 md:col-span-1 row-span-3 mt-5 md:mt-0'>
-        <div className='flex items-center gap-3 mb-2'>
+        <div className='flex items-center gap-3 mb-5'>
           <Avatar>
             <AvatarImage src='https://github.com/shadcn.png' />
             <AvatarFallback>CN</AvatarFallback>
@@ -73,11 +59,10 @@ const ItemDetails = ({ params }: { params: { itemId: string } }) => {
         <Separator />
 
         <div>
-          <h1 className='my-2 text-2xl font-semibold'>Item Name</h1>
+          <h1 className='my-5 text-2xl font-semibold'>Item Name</h1>
           <p className=' text-muted-foreground'>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque tempora laborum
-            repellendus amet, adipisci inventore, corrupti ipsum fugit suscipit numquam sint, harum
-            repellat quo iure! Deserunt est unde consequuntur velit.
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque tempora laborum repellendus amet, adipisci inventore,
+            corrupti ipsum fugit suscipit numquam sint, harum repellat quo iure! Deserunt est unde consequuntur velit.
           </p>
 
           <Table className='mt-5'>
