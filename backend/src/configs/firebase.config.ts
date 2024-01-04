@@ -1,6 +1,9 @@
 import 'dotenv/config';
 import env from '../utils/envValidate';
 
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+
 const firebaseConfig = {
   apiKey: env.FB_API_KEY,
   authDomain: env.FB_AUTH_DOMAIN,
@@ -12,3 +15,8 @@ const firebaseConfig = {
 };
 
 export default firebaseConfig;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+export { app, auth };

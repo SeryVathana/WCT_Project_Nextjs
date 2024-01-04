@@ -1,11 +1,11 @@
+import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { ReduxProvider } from '@/redux/provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { cn } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
-import { Separator } from '@/components/ui/separator';
-import Footer from '@/components/Footer';
-import { ReduxProvider } from '@/redux/provider';
 
 const inter = Inter({ subsets: ['latin'] });
 

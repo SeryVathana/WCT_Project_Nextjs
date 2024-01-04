@@ -9,6 +9,24 @@ export const getPosts: RequestHandler = async (req, res, next) => {
     console.log(err);
   }
 };
+export const getAcceptedPosts: RequestHandler = async (req, res, next) => {
+  try {
+    const postes = await PostModel.find({ pending: false });
+    res.status(200).json(postes);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getMyPosts: RequestHandler = async (req, res, next) => {
+  console.log(req.params.uid);
+  try {
+    const postes = await PostModel.find({ 'seller.id': req.params.uid });
+    res.status(200).json(postes);
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const getPost: RequestHandler = async (req, res, next) => {
   const inputId = req.params.postid;
@@ -21,13 +39,51 @@ export const getPost: RequestHandler = async (req, res, next) => {
   }
 };
 
+type SellerType = {
+  id: string;
+  name: string;
+  email: string;
+  pfImgURL: string;
+};
+
+type ImgType = {
+  downloadURL: string;
+  name: string;
+  storageFileName: string;
+  type: string;
+};
+
+type BidHistoryType = {
+  bidder?: string;
+  price?: string;
+  date?: Date;
+};
+
+type LocationType = {
+  country: string;
+  district: string;
+  city: string;
+};
+
 type CreatePostBody = {
   itemName?: string;
-  price?: number;
+  itemDescription?: string;
+  biddingHistory?: BidHistoryType[];
+  initialPrice?: number;
+  bidIncrement?: number;
+  location?: LocationType;
+  category?: string;
+  pending?: boolean;
+  displayImg?: ImgType;
+  othersImg?: ImgType[];
+  seller?: SellerType;
+  endDate?: string;
 };
 
 export const createPost: RequestHandler<unknown, unknown, CreatePostBody, unknown> = async (req, res, next) => {
   const inputData = req.body;
+
+  console.log(inputData);
 
   try {
     const newPost = await PostModel.create(inputData);
@@ -42,12 +98,13 @@ type UpdatePostParams = {
 };
 
 type UpdatePostBody = {
-  itemName?: string;
-  price?: number;
+  pending: boolean;
 };
 
 export const updatePost: RequestHandler<UpdatePostParams, unknown, UpdatePostBody, unknown> = async (req, res, next) => {
   const inputId = req.params.postid;
+
+  console.log(req.body.pending);
 
   try {
     const post = await PostModel.findById(inputId).exec();
@@ -56,8 +113,7 @@ export const updatePost: RequestHandler<UpdatePostParams, unknown, UpdatePostBod
       throw Error('No post founded');
     }
 
-    post.itemName = req.body.itemName;
-    post.price = req.body.price;
+    post.pending = req.body.pending;
 
     const updatedPost = post.save();
 

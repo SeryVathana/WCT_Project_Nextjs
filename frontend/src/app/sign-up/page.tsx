@@ -10,19 +10,36 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useEffect, useState } from 'react';
+import { auth } from '@/configs/firebase-config';
+import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { Label } from '@/components/ui/label';
+import axios from 'axios';
+import { logIn } from '@/redux/features/auth-slice';
+import { useDispatch } from 'react-redux';
 
 const formSchema = z.object({
   firstname: z.string().min(2).max(10),
   lastname: z.string().min(2).max(10),
   email: z.string().email(),
   password: z.string().min(6, 'Password must be 6 or more characters.'),
-  phonenumber: z.string().min(6, 'Invalid phone number'),
-  birthdate: z.string().refine((date) => new Date(date).getFullYear() <= 2023 - 18, {
-    message: 'You must be 18 or above to join bidding.',
-  }),
 });
 
 const SignUp = () => {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const [birthDate, setBirthDate] = useState<string>('');
+  const [errorBirthDate, setErrorBirthDate] = useState<boolean>(false);
+
+  useEffect(() => {
+    auth.onAuthStateChanged(async (userCred) => {
+      if (userCred) {
+        // router.push('/');
+      }
+    });
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,8 +50,35 @@ const SignUp = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (new Date(Date.now()).getFullYear() - new Date(birthDate).getFullYear() < 18) {
+      setErrorBirthDate(true);
+      return;
+    } else {
+      setErrorBirthDate(false);
+    }
+
+    const newUserAcc = await createUserWithEmailAndPassword(auth, values.email, values.email);
+
+    console.log(newUserAcc.user.uid);
+    const reqBody = {
+      ...values,
+      photoURL: 'https://www2.deloitte.com/content/dam/Deloitte/nl/Images/promo_images/deloitte-nl-cm-digital-human-promo.jpg',
+      birthDate: new Date(birthDate).toISOString(),
+      uid: newUserAcc.user.uid,
+    };
+
+    const uploadedUserInfo = await axios.post('http://localhost:5000/user/create-user', { ...reqBody });
+    // dispatch(
+    //   logIn({
+    //     uid: uploadedUserInfo.data._id,
+    //     username: uploadedUserInfo.data.displayName,
+    //     email: uploadedUserInfo.data.email,
+    //     token: await newUserAcc.user.getIdToken(),
+    //     pfURL: uploadedUserInfo.data.photoURL,
+    //   })
+    // );
+    console.log(uploadedUserInfo.data);
   }
 
   return (
@@ -106,38 +150,26 @@ const SignUp = () => {
                 </>
               )}
             />
-            <FormField
-              control={form.control}
-              name='phonenumber'
-              render={({ field }) => (
-                <>
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl className=''>
-                      <Input placeholder='+000-000-000' type='number' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </>
+
+            <div className='space-y-2'>
+              <Label className={errorBirthDate ? 'text-destructive' : ''}>Birth Date</Label>
+              <Input
+                placeholder='End Date'
+                type='date'
+                value={birthDate}
+                onChange={(e) => {
+                  setBirthDate(e.target.value);
+                }}
+                className='col-span-3'
+              />
+
+              {errorBirthDate && (
+                <p className='text-sm font-medium text-destructive'>User must be 18 or above to join bidding.</p>
               )}
-            />
-            <FormField
-              control={form.control}
-              name='birthdate'
-              render={({ field }) => (
-                <>
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl className=''>
-                      <Input placeholder='+855-00-000-000' type='date' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </>
-              )}
-            />
+            </div>
+
             <div className='items-top flex space-x-2'>
-              <Checkbox id='terms1' required />
+              <Checkbox id='terms1' />
               <div className='grid gap-1.5 leading-none'>
                 <label
                   htmlFor='terms1'

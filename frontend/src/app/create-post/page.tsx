@@ -13,33 +13,75 @@ import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, ReactEventHandler, use, useEffect, useState } from 'react';
 import { AspectRatio } from '../../components//ui/aspect-ratio';
 import { Button } from '../../components//ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 
 import axios from 'axios';
 import { Skeleton } from '@/components/ui/skeleton';
-import EventEmitter from 'events';
+import { auth } from '@/configs/firebase-config';
+import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { useAuth } from '@/customHooks/useAuth';
+import { logIn } from '@/redux/features/auth-slice';
+
+type ImageResType = {
+  storageFileName: string;
+  downloadURL: string;
+  message: string;
+  name: string;
+  type: string;
+};
 
 const CreatePost = () => {
+  const user = useSelector((state: RootState) => state.authSlice.value);
   const [category, setCategory] = useState('');
+  const [errorCategory, setErrorCategory] = useState<boolean>(false);
 
-  const [displayImage, setDisplayImage] = useState<any | null>(null);
-  const [loadingDisplayImage, setLoadingDisplayImage] = useState<boolean>(false);
+  const [displayImage, setDisplayImage] = useState('');
+  const [displayFileImage, setDisplayFileImage] = useState<File | string>('');
+  const [errorDisplayImage, setErrorDisplayImage] = useState<boolean>(false);
 
   const [othersImage, setOthersImage] = useState<string[]>([]);
-  const [loadingOthersImage, setLoadingOthersImage] = useState<boolean>(false);
+  const [othersFileImage, setOthersFileImage] = useState<File[]>([]);
+  const [errorOthersImage, setErrorOthersImage] = useState<boolean>(false);
+
+  const [endDate, setEndDate] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
+  const [errorDate, setErrorDate] = useState<boolean>(false);
+  const dispatch = useDispatch();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    auth.onAuthStateChanged(async (userCred) => {
+      console.log(userCred);
+      if (userCred) {
+        const token = await userCred.getIdToken();
+        dispatch(logIn({ username: userCred.displayName, email: userCred.email, token: token }));
+        window.localStorage.setItem('auth', 'true');
+      }
+    });
+  }, []);
 
   const formSchema = z.object({
-    itemName: z.string({ required_error: 'Please enter item name' }).min(2).max(50),
-    itemDescription: z.string({ required_error: 'Please enter item description' }).min(2).max(120),
-    district: z.string({ required_error: 'Please enter bidding district' }).min(2).max(50),
-    city: z.string({ required_error: 'Please enter bidding city' }).min(2).max(50),
-    country: z.string({ required_error: 'Please enter bidding country' }).min(2).max(50),
-    startPrice: z.string({ required_error: 'Please enter start price' }),
-    bidIncrement: z.string({ required_error: 'Please enter bidding increment' }),
-    endDate: z.string({ required_error: 'Please enter bidding end date' }),
+    itemName: z.string({ required_error: 'Please enter item name' }).min(2, 'Input must be atleast 2 characters.').max(50),
+    itemDescription: z
+      .string({ required_error: 'Please enter item description' })
+      .min(2, 'Input must be atleast 2 characters.')
+      .max(120),
+    location: z.object({
+      district: z.string({ required_error: 'Please enter bidding district' }).min(2).max(50),
+      city: z.string({ required_error: 'Please enter bidding city' }).min(2).max(50),
+      country: z.string({ required_error: 'Please enter bidding country' }).min(2).max(50),
+    }),
+    initialPrice: z.coerce.number({ required_error: 'Please enter start price' }).int().min(1),
+    bidIncrement: z.coerce
+      .number({ required_error: 'Please enter bidding increment' })
+      .int({ message: 'Number must be integer' })
+      .min(1),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,88 +89,129 @@ const CreatePost = () => {
     defaultValues: {
       itemName: '',
       itemDescription: '',
-      district: '',
-      city: '',
-      country: '',
-      startPrice: '',
-      bidIncrement: '',
-      endDate: '',
+      location: {
+        district: '',
+        city: '',
+        country: '',
+      },
+      initialPrice: Number(''),
+      bidIncrement: Number(''),
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const location = {
-      district: values.district,
-      city: values.city,
-      country: values.country,
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!displayImage) {
+      setErrorDisplayImage(true);
+      return;
+    } else {
+      setErrorDisplayImage(false);
+    }
+
+    if (othersImage.length <= 0) {
+      setErrorOthersImage(true);
+      return;
+    } else {
+      setErrorOthersImage(false);
+    }
+
+    if (!endDate || !endTime) {
+      setErrorDate(true);
+      return;
+    } else {
+      setErrorDate(false);
+    }
+
+    if (!category) {
+      setErrorCategory(true);
+      return;
+    } else {
+      setErrorCategory(false);
+    }
+
+    let displayImageObj;
+    let othersImageObj: ImageResType[] = [];
+
+    await axios
+      .post(
+        'http://localhost:5000/upload',
+        { filename: displayFileImage },
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      .then((res) => {
+        console.log(res.data);
+        displayImageObj = res.data;
+      });
+
+    let otherImgData = new FormData();
+    othersFileImage.map((file) => {
+      otherImgData.append('filename', file);
+    });
+
+    await axios.post('http://localhost:5000/upload/multiple', otherImgData).then((res) => {
+      othersImageObj = res.data;
+    });
+
+    const endDateTime = new Date(endDate + ' ' + endTime).toISOString();
+
+    const data = {
+      ...values,
+      displayImg: displayImageObj,
+      othersImg: othersImageObj,
+      endDate: endDateTime,
+      biddingHistory: [],
+      category,
+      pending: true,
+      seller: {
+        id: user.userID,
+        name: user.username,
+        email: user.userEmail,
+        pfImgURL: user.username,
+      },
     };
 
-    console.log({ ...values, category, location, displayImage, othersImage });
-  }
+    console.log(data);
+
+    axios
+      .post('http://localhost:5000/api/posts', data)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   const handleUploadDisplayImg = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
     const inputData = e.target.files![0];
-
-    console.log(inputData);
-
-    const formData = new FormData();
-    formData.append('filename', inputData);
-
-    setLoadingDisplayImage(true);
-
-    axios
-      .post('http://localhost:5000/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      .then((res) => {
-        setDisplayImage(res.data);
-        setLoadingDisplayImage(false);
-        console.log(res.data);
-      });
+    const Url = URL.createObjectURL(inputData);
+    console.log(Url);
+    setDisplayImage(Url);
+    setDisplayFileImage(inputData);
   };
 
-  const handleUploadOtherImg = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleUploadOtherImg = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
     const inputData = Array.from(e.target.files!);
+    setOthersFileImage(inputData);
 
     inputData.map((img) => {
-      console.log(img);
-      const formData = new FormData();
-
-      formData.append('filename', img);
-      setLoadingOthersImage(true);
-
-      axios
-        .post('http://localhost:5000/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        .then((res) => {
-          setOthersImage((prev) => prev.concat(res.data));
-          setLoadingOthersImage(false);
-        });
+      const Url = URL.createObjectURL(img);
+      setOthersImage((prev) => [...prev, Url]);
     });
   };
 
   const handleDelete = async (inputData: any) => {
-    axios
-      .delete(`http://localhost:5000/upload/${inputData.storageFileName}`)
-      .then(() => setDisplayImage(null))
-      .catch((err) => console.log(err));
+    setDisplayImage('');
   };
   const handleDeleteOthers = async (inputData: any) => {
-    axios
-      .delete(`http://localhost:5000/upload/${inputData.storageFileName}`)
-      .then(() => {
-        setOthersImage((prev) => prev.filter((item) => item.storageFileName != inputData.storageFileName));
-      })
-      .catch((err) => console.log(err));
+    setOthersImage((prev) => prev.filter((item) => item != inputData));
   };
 
   useEffect(() => {
@@ -153,8 +236,8 @@ const CreatePost = () => {
 
         <div className='mt-5'>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-              <div className=' space-y-5'>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-10'>
+              <div className=' space-y-12'>
                 <FormField
                   control={form.control}
                   name='itemName'
@@ -184,39 +267,25 @@ const CreatePost = () => {
                 />
 
                 <div className='space-y-2'>
-                  <Label htmlFor='category'>Display Picture</Label>
-                  {displayImage || loadingDisplayImage ? null : (
-                    <Button asChild variant={'secondary'}>
-                      <Input type='file' onChange={(e) => handleUploadDisplayImg(e)} />
-                    </Button>
-                  )}
-
-                  {!displayImage && loadingDisplayImage ? (
-                    <Card className=' shadow-none rounded-md'>
-                      <CardContent className='p-2'>
-                        <div className='flex items-center justify-between'>
-                          <Skeleton className='w-[150px] h-[100px] rounded-md' />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    ''
+                  <Label htmlFor='category' className={errorDisplayImage ? 'text-destructive' : ''}>
+                    Display Picture
+                  </Label>
+                  {displayImage ? null : (
+                    <>
+                      <Button asChild variant={'secondary'}>
+                        <Input type='file' onChange={(e) => handleUploadDisplayImg(e)} />
+                      </Button>
+                      {errorDisplayImage && <p className='text-sm font-medium text-destructive'>Display Image is required</p>}
+                    </>
                   )}
 
                   {!displayImage ? null : (
                     <Card className=' shadow-none rounded-md'>
                       <CardContent className='p-2'>
                         <div className='flex items-center justify-between'>
-                          <div className='w-[150px] h-[100px] bg-gray-100 rounded-md flex items-center justify-center'>
+                          <div className={`w-[150px] bg-gray-50 rounded-md flex items-center justify-center`}>
                             <AspectRatio ratio={16 / 9}>
-                              <Image
-                                priority
-                                sizes='100'
-                                src={displayImage.downloadURL}
-                                alt='hi'
-                                className='object-contain'
-                                fill
-                              />
+                              <Image priority sizes='100' src={displayImage} alt='hi' className='object-contain' fill />
                             </AspectRatio>
                           </div>
                           <Button type='button' variant={'outline'} className='mr-5' onClick={() => handleDelete(displayImage)}>
@@ -229,15 +298,18 @@ const CreatePost = () => {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='category'>Other Pictures</Label>
+                  <Label htmlFor='category' className={errorOthersImage ? 'text-destructive' : ''}>
+                    Other Pictures
+                  </Label>
                   <Button asChild variant={'secondary'}>
                     <Input type='file' multiple onChange={(e) => handleUploadOtherImg(e)} />
                   </Button>
-                  {!othersImage && loadingOthersImage ? (
+                  {errorOthersImage && <p className='text-sm font-medium text-destructive'>Other Images is required</p>}
+                  {!othersImage ? (
                     <Card className=' shadow-none rounded-md'>
                       <CardContent className='p-2'>
                         <div className='flex items-center justify-between'>
-                          <Skeleton className='w-[150px] h-[100px] rounded-md' />
+                          <Skeleton className='w-[150px]  h-[84.375px] rounded-md' />
                         </div>
                       </CardContent>
                     </Card>
@@ -249,12 +321,12 @@ const CreatePost = () => {
                     <>
                       {othersImage?.map((img) => {
                         return (
-                          <Card key={img.name} className=' shadow-none rounded-md'>
+                          <Card key={img} className=' shadow-none rounded-md'>
                             <CardContent className='p-2'>
-                              <div className='flex items-center justify-between'>
-                                <div className='w-[150px] h-[100px] bg-gray-100 rounded-md flex items-center justify-center'>
+                              <div className='flex items-center justify-between '>
+                                <div className='w-[150px] bg-gray-50 rounded-md flex items-center justify-center'>
                                   <AspectRatio ratio={16 / 9}>
-                                    <Image priority sizes='100' src={img.downloadURL} alt='hi' className='object-contain' fill />
+                                    <Image priority sizes='100' src={img} alt='hi' className='object-contain' fill />
                                   </AspectRatio>
                                 </div>
                                 <Button
@@ -275,8 +347,10 @@ const CreatePost = () => {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='category'>Item Category</Label>
-                  <Select onValueChange={(e) => setCategory(e)} required>
+                  <Label htmlFor='category' className={errorDisplayImage ? 'text-destructive' : ''}>
+                    Item Category
+                  </Label>
+                  <Select onValueChange={(e) => setCategory(e)}>
                     <SelectTrigger>
                       <SelectValue placeholder='Pick a category' />
                     </SelectTrigger>
@@ -286,13 +360,14 @@ const CreatePost = () => {
                       <SelectItem value='system'>System</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errorCategory && <p className='text-sm font-medium text-destructive'>Category is required</p>}
                 </div>
                 <div className='space-y-2'>
                   <h1 className='text-md font-semibold'>Location</h1>
                   <div className='flex gap-2'>
                     <FormField
                       control={form.control}
-                      name='district'
+                      name='location.district'
                       render={({ field }) => (
                         <FormItem className='flex-1'>
                           <FormLabel>District</FormLabel>
@@ -304,7 +379,7 @@ const CreatePost = () => {
                     />
                     <FormField
                       control={form.control}
-                      name='city'
+                      name='location.city'
                       render={({ field }) => (
                         <FormItem className='flex-1'>
                           <FormLabel>City</FormLabel>
@@ -316,7 +391,7 @@ const CreatePost = () => {
                     />
                     <FormField
                       control={form.control}
-                      name='country'
+                      name='location.country'
                       render={({ field }) => (
                         <FormItem className='flex-1'>
                           <FormLabel>Country</FormLabel>
@@ -331,12 +406,15 @@ const CreatePost = () => {
 
                 <FormField
                   control={form.control}
-                  name='startPrice'
+                  name='initialPrice'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Start Price</FormLabel>
                       <FormControl>
-                        <Input placeholder='Start price' type='number' {...field} />
+                        <div className='relative'>
+                          <Input placeholder='Start price' type='number' {...field} className='pl-8 ' />
+                          <span className='absolute -translate-y-1/2 top-1/2 left-3 text-muted-foreground'>$</span>
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -348,23 +426,38 @@ const CreatePost = () => {
                     <FormItem className='flex-1'>
                       <FormLabel>Bid Increment</FormLabel>
                       <FormControl>
-                        <Input placeholder='Bid Increment' {...field} />
+                        <div className='relative'>
+                          <Input placeholder='Bid Increment' type='number' {...field} className='pl-8 ' />
+                          <span className='absolute -translate-y-1/2 top-1/2 left-3 text-muted-foreground'>$</span>
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name='endDate'
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input placeholder='End Date' type='date' {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                <div className='space-y-2'>
+                  <Label>End Date and Time</Label>
+                  <div className='grid grid-cols-5 gap-2'>
+                    <Input
+                      placeholder='End Date'
+                      type='date'
+                      value={endDate}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                      }}
+                      className='col-span-3'
+                    />
+                    <Input
+                      placeholder='End Date'
+                      type='time'
+                      value={endTime}
+                      onChange={(e) => {
+                        setEndTime(e.target.value);
+                      }}
+                      className='col-span-2'
+                    />
+                  </div>
+                  {errorDate && <p className='text-sm font-medium text-destructive'>End Date and Time is required</p>}
+                </div>
               </div>
               <div className='flex justify-center'>
                 <Button type='submit'>Submit</Button>

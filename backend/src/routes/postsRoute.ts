@@ -1,9 +1,21 @@
 import express from 'express';
-import { createPost, deletePost, getPost, getPosts, updatePost } from '../controllers/postController';
+import {
+  createPost,
+  deletePost,
+  getAcceptedPosts,
+  getMyPosts,
+  getPost,
+  getPosts,
+  updatePost,
+} from '../controllers/postController';
 
 const router = express.Router();
 
-router.get('/', getPosts);
+router.get('/', getAcceptedPosts);
+
+router.get('/pending', getPosts);
+
+router.get('/mypost/:uid', getMyPosts);
 
 router.get('/:postid', getPost);
 

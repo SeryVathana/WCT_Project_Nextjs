@@ -7,27 +7,23 @@ import * as z from 'zod';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { useDispatch, useSelector } from 'react-redux';
 import { logIn } from '@/redux/features/auth-slice';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+
+import { Separator } from '@/components/ui/separator';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { useEffect } from 'react';
-import { RootState } from '@/redux/store';
+import { FcGoogle } from 'react-icons/fc';
+import { auth, provider } from '../../configs/firebase-config';
+import axios from 'axios';
 
 const SignIn = () => {
-  const user = useSelector((state: RootState) => state.authSlice.value);
-  const dispatch = useDispatch();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const formSchema = z.object({
     email: z.string().email(),
@@ -42,18 +38,22 @@ const SignIn = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    dispatch(logIn({ username: 'Sery Vathana', email: values.email }));
-    router.push('/');
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const user = await signInWithEmailAndPassword(auth, values.email, values.password);
+    console.log(user);
+
+    // axios.post('http://localhost:5000/user/sign-in-with-email', { ...values }).then((userCred) => {
+    //   console.log(userCred);
+    // });
+    // dispatch(logIn({ username: 'Sery Vathana', email: values.email }));
   }
 
   useEffect(() => {
-    if (user.isAuth) {
-      console.log(user);
-
-      router.push('/');
-    }
+    auth.onAuthStateChanged(async (userCred) => {
+      if (userCred) {
+        router.push('/');
+      }
+    });
   });
 
   return (
@@ -98,6 +98,17 @@ const SignIn = () => {
             </div>
           </form>
         </Form>
+        {/* <div className='flex items-center w-full justify-between my-10'>
+          <Separator orientation='horizontal' className='w-2/5' />
+          <h1>or</h1>
+          <Separator orientation='horizontal' className='w-2/5' />
+        </div>
+        <Button variant='outline' onClick={loginWithGoogle} className='w-full flex items-center gap-5'>
+          <div className=' text-lg'>
+            <FcGoogle />
+          </div>
+          <span>Sign in with Google</span>
+        </Button> */}
       </div>
     </MaxWidthWrapper>
   );

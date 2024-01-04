@@ -1,5 +1,3 @@
-'use client';
-
 import CardsContainer from '@/components/CardsContainer';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import Link from 'next/link';
@@ -8,28 +6,25 @@ import { PRODUCT_CATEGORIES } from '@/data/List';
 import { cn } from '@/lib/utils';
 
 import { Button, buttonVariants } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const Browse = () => {
+const getItems = async () => {
+  const res = await fetch('http://localhost:5000/api/posts', { cache: 'no-store' });
+  const data = await res.json();
+
+  return data;
+};
+
+const Browse = async () => {
+  const data = await getItems();
+
   return (
-    <MaxWidthWrapper className='grid grid-cols-12 my-10 lg:px-10 xl:px-2 gap-5'>
+    <MaxWidthWrapper className='grid grid-cols-12 my-10 lg:px-20 xl:px-2 gap-5'>
       <div className='hidden md:flex md:flex-col md:col-span-3 xl:col-span-2 border-r mr-0 lg:mr-2 xl:mr-5 overflow-hidden'>
         <h3 className='text-lg font-semibold'>Categories</h3>
         <ul className='mt-5 flex flex-col'>
           {PRODUCT_CATEGORIES.map((category) => (
-            <li
-              key={category}
-              className={cn(
-                buttonVariants({ variant: 'link' }),
-                'justify-start p-0 cursor-pointer'
-              )}
-            >
+            <li key={category} className={cn(buttonVariants({ variant: 'link' }), 'justify-start p-0 cursor-pointer')}>
               {category}
             </li>
           ))}
@@ -71,7 +66,7 @@ const Browse = () => {
           </div>
         </div>
 
-        <CardsContainer className='mt-5 md:grid-cols-2' />
+        <CardsContainer data={data} className='mt-5 md:grid-cols-2' />
       </div>
     </MaxWidthWrapper>
   );

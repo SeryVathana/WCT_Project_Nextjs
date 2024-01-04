@@ -4,20 +4,13 @@ import Link from 'next/link';
 import MaxWidthWrapper from './MaxWidthWrapper';
 import { buttonVariants } from './ui/button';
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { AlignJustify, ShoppingCart } from 'lucide-react';
-import { Separator } from './ui/separator';
-import { useDispatch, useSelector } from 'react-redux';
-import { logOut } from '@/redux/features/auth-slice';
+import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
+import { logIn, logOut } from '@/redux/features/auth-slice';
 import { RootState } from '@/redux/store';
+import { AlignJustify } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Separator } from './ui/separator';
 
 import {
   DropdownMenu,
@@ -27,8 +20,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/configs/firebase-config';
+import { useEffect } from 'react';
+import axios from 'axios';
 
 const NAVLINK = [
   {
@@ -53,6 +50,33 @@ const Navbar = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
   const router = useRouter();
   const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logOut());
+    signOut(auth);
+    router.push('/sign-in');
+  };
+
+  useEffect(() => {
+    auth.onAuthStateChanged(async (userCred) => {
+      if (userCred) {
+        const userRes = await axios.get(`http://localhost:5000/user/${userCred.uid}`);
+        const userData = userRes.data[0];
+
+        const token = await userCred.getIdToken();
+
+        dispatch(
+          logIn({
+            uid: userCred.uid,
+            username: userData.lastName + ' ' + userData.firstName,
+            email: userData.email,
+            token: token,
+            pfURL: userData.photoURL,
+          })
+        );
+      }
+    });
+  }, [dispatch]);
 
   return (
     <div className=' bg-white sticky top-0 z-50  border-b border-b-gray-100 h-16 flex items-center'>
@@ -93,11 +117,9 @@ const Navbar = () => {
             {!user.isAuth ? null : (
               <>
                 <DropdownMenu>
-                  <DropdownMenuTrigger
-                    className={cn('flex items-center gap-2', buttonVariants({ variant: 'ghost' }))}
-                  >
-                    <Avatar className='w-8 h-8'>
-                      <AvatarImage src='https://github.com/shadcn.png' />
+                  <DropdownMenuTrigger className={cn('flex items-center gap-2', buttonVariants({ variant: 'ghost' }))}>
+                    <Avatar className='w-8 h-8 border'>
+                      <AvatarImage src={user.userPfURL} />
                       <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     {user.username}
@@ -105,21 +127,10 @@ const Navbar = () => {
                   <DropdownMenuContent>
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/profile')}>
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/create-post')}>
-                      Create Post
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/create-post')}>Create Post</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        dispatch(logOut());
-                        router.push('/sign-in');
-                      }}
-                    >
-                      Log out
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleLogout()}>Log out</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
@@ -135,11 +146,7 @@ const Navbar = () => {
               <div className='flex flex-col text-center mt-5'>
                 {NAVLINK.map((link) => {
                   return (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      className='transition-all hover:opacity-50 text-lg py-5'
-                    >
+                    <Link key={link.label} href={link.href} className='transition-all hover:opacity-50 text-lg py-5'>
                       <SheetTrigger>{link.label}</SheetTrigger>
                     </Link>
                   );
@@ -147,20 +154,14 @@ const Navbar = () => {
                 <Separator />
                 {user.isAuth ? null : (
                   <SheetTrigger>
-                    <Link
-                      href={'/sign-in'}
-                      className='transition-all hover:opacity-50 text-lg py-5'
-                    >
+                    <Link href={'/sign-in'} className='transition-all hover:opacity-50 text-lg py-5'>
                       Sign In
                     </Link>
                   </SheetTrigger>
                 )}
                 {user.isAuth ? null : (
                   <SheetTrigger>
-                    <Link
-                      href={'/sign-up'}
-                      className='transition-all hover:opacity-50 text-lg py-5'
-                    >
+                    <Link href={'/sign-up'} className='transition-all hover:opacity-50 text-lg py-5'>
                       Create an account
                     </Link>
                   </SheetTrigger>
@@ -173,10 +174,7 @@ const Navbar = () => {
 
                 {!user.isAuth ? null : (
                   <SheetTrigger
-                    onClick={() => {
-                      dispatch(logOut());
-                      router.push('/sign-in');
-                    }}
+                    onClick={() => handleLogout()}
                     className='transition-all hover:opacity-50 text-lg py-5 cursor-pointer'
                   >
                     Log out

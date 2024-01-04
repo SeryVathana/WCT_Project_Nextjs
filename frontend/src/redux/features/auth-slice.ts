@@ -9,14 +9,20 @@ type AuthState = {
   username: string;
   userID: string;
   isModerator: boolean;
+  userEmail: string;
+  userToken: string;
+  userPfURL: string;
 };
 
 const initialState = {
   value: {
-    isAuth: true,
-    username: 'Sery Vathana',
     userID: '',
+    username: 'Guest',
+    userEmail: '',
+    userToken: '',
+    isAuth: false,
     isModerator: false,
+    userPfURL: '',
   } as AuthState,
 } as InitialState;
 
@@ -33,9 +39,11 @@ export const auth = createSlice({
         value: {
           isAuth: true,
           username: actions.payload.username,
-          userID: '92183yh1ud9a7213',
+          userID: actions.payload.uid,
           userEmail: actions.payload.email,
           isModerator: true,
+          userToken: actions.payload.token,
+          userPfURL: actions.payload.pfURL,
         },
       };
     },
