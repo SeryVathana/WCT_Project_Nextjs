@@ -10,20 +10,21 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { logIn } from '@/redux/features/auth-slice';
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 
-import { Separator } from '@/components/ui/separator';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { useEffect } from 'react';
-import { FcGoogle } from 'react-icons/fc';
-import { auth, provider } from '../../configs/firebase-config';
-import axios from 'axios';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { Ref, useEffect, useRef, useState } from 'react';
+import { auth } from '../../configs/firebase-config';
+
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const SignIn = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const [error, setError] = useState<boolean>(false);
+  const errorRef = useRef<Ref<HTMLParagraphElement>>();
 
   const formSchema = z.object({
     email: z.string().email(),
@@ -38,15 +39,16 @@ const SignIn = () => {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const user = await signInWithEmailAndPassword(auth, values.email, values.password);
-    console.log(user);
-
-    // axios.post('http://localhost:5000/user/sign-in-with-email', { ...values }).then((userCred) => {
-    //   console.log(userCred);
-    // });
-    // dispatch(logIn({ username: 'Sery Vathana', email: values.email }));
-  }
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setError(false);
+    await signInWithEmailAndPassword(auth, values.email, values.password)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        setError(true);
+      });
+  };
 
   useEffect(() => {
     auth.onAuthStateChanged(async (userCred) => {
@@ -93,25 +95,25 @@ const SignIn = () => {
                 </>
               )}
             />
+            {error && <AlertDestructive />}
             <div className=' w-full flex justify-center'>
               <Button type='submit'>Sign In</Button>
             </div>
           </form>
         </Form>
-        {/* <div className='flex items-center w-full justify-between my-10'>
-          <Separator orientation='horizontal' className='w-2/5' />
-          <h1>or</h1>
-          <Separator orientation='horizontal' className='w-2/5' />
-        </div>
-        <Button variant='outline' onClick={loginWithGoogle} className='w-full flex items-center gap-5'>
-          <div className=' text-lg'>
-            <FcGoogle />
-          </div>
-          <span>Sign in with Google</span>
-        </Button> */}
       </div>
     </MaxWidthWrapper>
   );
 };
 
 export default SignIn;
+
+function AlertDestructive() {
+  return (
+    <Alert variant='destructive'>
+      <AlertCircle className='h-4 w-4' />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription>Email or Password is not correct.</AlertDescription>
+    </Alert>
+  );
+}

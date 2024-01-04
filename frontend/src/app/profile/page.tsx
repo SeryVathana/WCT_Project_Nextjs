@@ -1,28 +1,43 @@
 'use client';
 
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RootState } from '@/redux/store';
-import { useSelector } from 'react-redux';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { auth } from '@/configs/firebase-config';
-import { useRouter } from 'next/navigation';
-import { ImgType, ItemDataType } from '@/types/types';
+import { RootState } from '@/redux/store';
+import { ItemDataType } from '@/types/types';
 import axios from 'axios';
-import { init } from 'next/dist/compiled/webpack/webpack';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Item } from 'firebase/analytics';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PRODUCT_CATEGORIES } from '@/data/List';
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
@@ -31,10 +46,10 @@ const Profile = () => {
   useEffect(() => {
     auth.onAuthStateChanged(async (userCred) => {
       if (!userCred) {
-        router.push('/');
+        router.push('/sign-in');
       }
     });
-  });
+  }, []);
 
   return (
     <MaxWidthWrapper className='min-h-screen py-5'>
@@ -42,7 +57,7 @@ const Profile = () => {
         <TabsList className='flex items-center justify-start w-full flex-wrap'>
           <TabsTrigger value='profile'>Profile</TabsTrigger>
           <TabsTrigger value='myposts'>My Posts</TabsTrigger>
-          <TabsTrigger value='userposts'>User Posts</TabsTrigger>
+          {user.isModerator ? <TabsTrigger value='userposts'>User Posts</TabsTrigger> : null}
         </TabsList>
 
         <TabsContent value='profile'>
@@ -51,18 +66,51 @@ const Profile = () => {
         <TabsContent value='myposts'>
           <MyPostsTab />
         </TabsContent>
-        <TabsContent value='userposts'>
-          <UserPostsTab />
-        </TabsContent>
+        {user.isModerator ? (
+          <TabsContent value='userposts'>
+            <UserPostsTab />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </MaxWidthWrapper>
   );
 };
 
+type UserInfoType = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  _id: string;
+  photoURL: string;
+  birthDate: string;
+  displayName: string;
+  isModerator: boolean;
+};
+
 const ProfileTab = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
+  const [userInfo, setUserInfo] = useState<UserInfoType>();
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      axios.get(`http://localhost:5000/user/${user.userID}`).then((res) => {
+        setUserInfo(res.data[0]);
+      });
+    }
+  }, [user]);
+
+  const giveDateTime = (inputDate: string | undefined) => {
+    if (!inputDate) {
+      return;
+    }
+
+    const today = new Date(inputDate);
+    const date = today.getDate() + '-' + (today.getMonth() + 1) + '-' + today.getFullYear();
+    return date;
+  };
+
   return (
-    <div className='mt-5 grid grid-cols-2 '>
+    <div className='mt-5 grid grid-cols-2'>
       <div className='col-span-2 md:col-span-1  mb-10 md:ml-5 py-10 md:py-0 border-b border-b-gray-300 md:border-none'>
         <Table>
           <TableHeader>
@@ -73,27 +121,23 @@ const ProfileTab = () => {
           <TableBody>
             <TableRow>
               <TableCell className='font-medium'>First Name</TableCell>
-              <TableCell>{user.username}</TableCell>
+              <TableCell>{userInfo?.firstName}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className='font-medium'>Last Name</TableCell>
-              <TableCell>{user.username}</TableCell>
+              <TableCell>{userInfo?.lastName}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className='font-medium'>Email</TableCell>
-              <TableCell>{user.userEmail}</TableCell>
+              <TableCell>{userInfo?.email}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className='font-medium'>Date of birth</TableCell>
-              <TableCell>29th - Janaury - 2023</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className='font-medium'>Phone Number</TableCell>
-              <TableCell>016 53 42 41</TableCell>
+              <TableCell>{giveDateTime(userInfo?.birthDate)}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className='font-medium'>Role</TableCell>
-              <TableCell>Admin</TableCell>
+              <TableCell>{userInfo?.isModerator ? 'Admin' : 'User'}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -108,39 +152,23 @@ const ProfileTab = () => {
 
 const MyPostsTab = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
-  const [data, setData] = useState<ItemDataType[]>();
+  const [data, setData] = useState<ItemDataType[]>([]);
 
-  const handleAccept = (inputItem: ItemDataType) => {
-    console.log(inputItem);
-
-    const reqData = {
-      pending: false,
-    };
-
-    axios.patch(`http://localhost:5000/api/posts/${inputItem._id}`, reqData).then(() => {
-      setData((prev) => prev?.map((item) => (item._id === inputItem._id ? { ...item, pending: false } : item)));
-    });
-  };
-  const handleRemove = (inputItem: ItemDataType) => {
-    console.log(inputItem);
-
-    const reqData = {
-      pending: true,
-    };
-
-    axios.patch(`http://localhost:5000/api/posts/${inputItem._id}`, reqData).then(() => {
-      setData((prev) => prev?.map((item) => (item._id === inputItem._id ? { ...item, pending: true } : item)));
-    });
-  };
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/posts/mypost/${user.userID}`).then((res) => setData(res.data));
+    if (auth.currentUser) {
+      axios.get(`http://localhost:5000/api/posts/mypost/${user.userID}`).then((res) => setData(res.data));
+    }
   }, [user.userID]);
 
   return (
     <div className='grid grid-cols-12 gap-5 mt-5'>
-      <div className=' mt-5 md:mt-0 col-span-12 md:col-span-9 order-2 md:order-1'>
+      <Card className=' mt-5 md:mt-0 col-span-12 md:col-span-9 order-2 md:order-1 p-2 shadow-none'>
         <h1 className='text-xl font-semibold'>My Recent Posts</h1>
+
+        {data?.length <= 0 && <h1 className='mt-5 text-center'>No item found.</h1>}
+
         {data?.map((item) => {
           return (
             <Accordion type='multiple' key={item._id}>
@@ -221,31 +249,29 @@ const MyPostsTab = () => {
                       <TableBody>
                         <TableRow>
                           <TableCell className='font-medium'>Categories</TableCell>
-                          <TableCell>Electronic, Devices</TableCell>
+                          <TableCell>{item.category}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Location</TableCell>
-                          <TableCell>Siem Reap, Cambodia</TableCell>
+                          <TableCell>
+                            {item.location.district + ', ' + item.location.city + ', ' + item.location.country}
+                          </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Start Date: </TableCell>
-                          <TableCell>12 - Nov - 2023</TableCell>
+                          <TableCell>{new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>End Date</TableCell>
-                          <TableCell>12 - Nov - 2023</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className='font-medium'>Remaining Days</TableCell>
-                          <TableCell>12d : 12h : 12mn</TableCell>
+                          <TableCell>{new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Start Price</TableCell>
-                          <TableCell>$ 1,219</TableCell>
+                          <TableCell>$ {item.initialPrice.toLocaleString()}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Bid Increment</TableCell>
-                          <TableCell>$ 100</TableCell>
+                          <TableCell>$ {item.bidIncrement.toLocaleString()}</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -254,53 +280,42 @@ const MyPostsTab = () => {
                     <div className='col-span-2 md:col-span-1 row-span-3 mt-5 md:mt-0'>
                       <div className='flex items-center gap-3 mb-2'>
                         <Avatar>
-                          <AvatarImage src='https://github.com/shadcn.png' />
+                          <AvatarImage src={item.seller.pfImgURL} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
 
                         <div>
-                          <h3 className='text-lg font-semibold'>Sery Vathana</h3>
-                          <h6 className='text-sm'>Seller</h6>
+                          <h3 className='text-lg font-semibold'>{item.seller.name}</h3>
+                          <h6 className='text-sm text-muted-foreground'>{item.seller.email}</h6>
                         </div>
                       </div>
                       <Separator />
 
                       <div>
-                        <h1 className='my-2 text-2xl font-semibold'>Item Name</h1>
-                        <p className=' text-muted-foreground'>
-                          Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque tempora laborum repellendus amet,
-                          adipisci inventore, corrupti ipsum fugit suscipit numquam sint, harum repellat quo iure! Deserunt est
-                          unde consequuntur velit.
-                        </p>
-                      </div>
-
-                      <div className='flex mt-10 gap-5'>
-                        {item.pending ? (
-                          <Button className='' onClick={() => handleAccept(item)}>
-                            Accept
-                          </Button>
-                        ) : (
-                          <Button variant={'destructive'} onClick={() => handleRemove(item)}>
-                            Reject
-                          </Button>
-                        )}
+                        <h1 className='my-2 text-2xl font-semibold'>{item.itemName}</h1>
+                        <p className=' text-muted-foreground'>{item.itemDescription}</p>
                       </div>
                     </div>
+                    {!item.pending ? null : (
+                      <div className='mt-5'>
+                        <DialogDemo data={item} />
+                      </div>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           );
         })}
-      </div>
+      </Card>
       <Card className='col-span-12 md:col-span-3 order-1 md:order-2 h-fit shadow-none'>
         <CardHeader>
           <CardTitle>Sumary</CardTitle>
         </CardHeader>
         <CardContent className='space-y-2'>
-          <p>Posted Item: 102</p>
-          <p>Sold Item: 100</p>
-          <p>Current Item: 2</p>
+          <p>Posted Item: {data?.length}</p>
+          <p>Sold Item: 0</p>
+          <p>Current Item: 0</p>
         </CardContent>
       </Card>
     </div>
@@ -308,7 +323,8 @@ const MyPostsTab = () => {
 };
 
 const UserPostsTab = () => {
-  const [data, setData] = useState<ItemDataType[]>();
+  const user = useSelector((state: RootState) => state.authSlice.value);
+  const [data, setData] = useState<ItemDataType[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
 
   const handleAccept = (inputItem: ItemDataType) => {
@@ -335,18 +351,21 @@ const UserPostsTab = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/posts/pending', { cache: 'no-store' })
+    fetch('http://localhost:5000/api/posts/pending')
       .then((res) => res.json())
       .then((data: ItemDataType[]) => {
         setData(data);
-
-        // data.map((item) => (item.pending ? setPendingCount((prev) => prev + ) : setPendingCount((prev) => prev + 0)));
+        console.log(data);
+      })
+      .catch((err) => {
+        console.log(err);
       });
   }, []);
   return (
     <div className='grid grid-cols-12 gap-5 mt-5'>
-      <div className=' mt-5 md:mt-0 col-span-12 md:col-span-9 order-2 md:order-1'>
+      <Card className=' mt-5 md:mt-0 col-span-12 md:col-span-9 order-2 md:order-1 border p-2 shadow-none'>
         <h1 className='text-xl font-semibold'>User Pending Posts</h1>
+        {data?.length <= 0 && <h1 className='mt-5 text-center'>No item found.</h1>}
         {data?.map((item) => {
           return (
             <Accordion type='multiple' key={item._id}>
@@ -427,31 +446,29 @@ const UserPostsTab = () => {
                       <TableBody>
                         <TableRow>
                           <TableCell className='font-medium'>Categories</TableCell>
-                          <TableCell>Electronic, Devices</TableCell>
+                          <TableCell>{item.category}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Location</TableCell>
-                          <TableCell>Siem Reap, Cambodia</TableCell>
+                          <TableCell>
+                            {item.location.district + ', ' + item.location.city + ', ' + item.location.country}
+                          </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className='font-medium'>Start Date: </TableCell>
-                          <TableCell>12 - Nov - 2023</TableCell>
+                          <TableCell className='font-medium'>Post Date: </TableCell>
+                          <TableCell> {new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>End Date</TableCell>
-                          <TableCell>12 - Nov - 2023</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className='font-medium'>Remaining Days</TableCell>
-                          <TableCell>12d : 12h : 12mn</TableCell>
+                          <TableCell> {new Date(item.endDate).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Start Price</TableCell>
-                          <TableCell>$ 1,219</TableCell>
+                          <TableCell>$ {item.initialPrice.toLocaleString()}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Bid Increment</TableCell>
-                          <TableCell>$ 100</TableCell>
+                          <TableCell>$ {item.bidIncrement.toLocaleString()}</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -460,37 +477,35 @@ const UserPostsTab = () => {
                     <div className='col-span-2 md:col-span-1 row-span-3 mt-5 md:mt-0'>
                       <div className='flex items-center gap-3 mb-2'>
                         <Avatar>
-                          <AvatarImage src='https://github.com/shadcn.png' />
+                          <AvatarImage src={item.seller.pfImgURL} className=' object-cover' />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
 
                         <div>
-                          <h3 className='text-lg font-semibold'>Sery Vathana</h3>
-                          <h6 className='text-sm'>Seller</h6>
+                          <h3 className='text-lg font-semibold'>{item.seller.name}</h3>
+                          <h6 className='text-sm text-muted-foreground'>{item.seller.email}</h6>
                         </div>
                       </div>
                       <Separator />
 
                       <div>
-                        <h1 className='my-2 text-2xl font-semibold'>Item Name</h1>
-                        <p className=' text-muted-foreground'>
-                          Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque tempora laborum repellendus amet,
-                          adipisci inventore, corrupti ipsum fugit suscipit numquam sint, harum repellat quo iure! Deserunt est
-                          unde consequuntur velit.
-                        </p>
+                        <h1 className='my-2 text-2xl font-semibold'>{item.itemName}</h1>
+                        <p className=' text-muted-foreground'>{item.itemDescription}</p>
                       </div>
 
-                      <div className='flex mt-10 gap-5'>
-                        {item.pending ? (
-                          <Button className='' onClick={() => handleAccept(item)}>
-                            Accept
-                          </Button>
-                        ) : (
-                          <Button variant={'destructive'} onClick={() => handleRemove(item)}>
-                            Reject
-                          </Button>
-                        )}
-                      </div>
+                      {!user.isModerator ? null : (
+                        <div className='flex mt-10 gap-5'>
+                          {item.pending ? (
+                            <Button className='' onClick={() => handleAccept(item)}>
+                              Accept
+                            </Button>
+                          ) : (
+                            <Button variant={'destructive'} onClick={() => handleRemove(item)}>
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </AccordionContent>
@@ -498,7 +513,7 @@ const UserPostsTab = () => {
             </Accordion>
           );
         })}
-      </div>
+      </Card>
       <Card className='col-span-12 md:col-span-3 order-1 md:order-2 h-fit shadow-none'>
         <CardHeader>
           <CardTitle>Sumary</CardTitle>
@@ -512,5 +527,56 @@ const UserPostsTab = () => {
     </div>
   );
 };
+
+export function DialogDemo({ data }: { data: ItemDataType }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant='outline'>Edit</Button>
+      </DialogTrigger>
+      <DialogContent className='sm:max-w-[600px]'>
+        <DialogHeader>
+          <DialogTitle>Edit Item</DialogTitle>
+        </DialogHeader>
+        <div className='grid gap-4 py-4'>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='name' className='text-right'>
+              Item Name
+            </Label>
+            <Input id='name' defaultValue={data.itemName} className='col-span-3' />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='username' className='text-right'>
+              Description
+            </Label>
+            <Textarea id='username' defaultValue={data.itemDescription} className='col-span-3' />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='username' className='text-right'>
+              Category
+            </Label>
+            <Select defaultValue={data.category}>
+              <SelectTrigger className='col-span-3'>
+                <SelectValue placeholder='Pick a category' />
+              </SelectTrigger>
+              <SelectContent>
+                {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
+                  return (
+                    <SelectItem key={cate} value={cate.toLowerCase()}>
+                      {cate}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type='submit'>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default Profile;

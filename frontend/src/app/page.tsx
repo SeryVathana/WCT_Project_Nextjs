@@ -4,34 +4,12 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 const getItem = async () => {
-  const data = await fetch('http://localhost:5000/api/posts', { cache: 'no-store' });
+  const data = await fetch('http://localhost:5000/api/posts', { cache: 'no-cache' });
   return data.json();
 };
 
 const Homepage = async () => {
-  // const dispatch = useDispatch();
-  // const [data, setData] = useState([]);
-
   const data = await getItem();
-
-  // useEffect(() => {
-  // auth.onAuthStateChanged(async (userCred) => {
-  //   console.log(userCred);
-  //   if (userCred) {
-  //     const token = await userCred.getIdToken();
-  //     dispatch(
-  //       logIn({
-  //         uid: userCred.uid,
-  //         username: userCred.displayName,
-  //         email: userCred.email,
-  //         token: token,
-  //         pfURL: userCred.photoURL,
-  //       })
-  //     );
-  //     console.log(userCred.uid);
-  //   }
-  // });
-  // }, []);
 
   return (
     <>

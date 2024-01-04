@@ -1,3 +1,5 @@
+'use client';
+
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -5,14 +7,30 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
-import { ItemDataType } from '@/types/types';
+import { BidHistoryType, ItemDataType } from '@/types/types';
+import { useEffect, useState } from 'react';
 
 export default function ItemCard({ data }: { data: ItemDataType }) {
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+
+  useEffect(() => {
+    const total = data.biddingHistory.reduce((sum: number, item: BidHistoryType) => sum + item.price, 0);
+    setCurrentPrice(total + data.initialPrice);
+  }, [data]);
+
   return (
     <Card className='shadow-none p-0'>
       <CardHeader className='p-0'>
         <AspectRatio ratio={9 / 5} className=''>
-          <Image src={data.displayImg.downloadURL} alt='Image' fill priority sizes='100' className='rounded-md object-cover' />
+          <Image
+            src={data.displayImg.downloadURL}
+            alt='Image'
+            fill
+            sizes='(max-width: 768px) 100vw,
+              (max-width: 1200px) 50vw,
+              33vw'
+            className='rounded-md object-cover'
+          />
         </AspectRatio>
       </CardHeader>
 
@@ -24,7 +42,8 @@ export default function ItemCard({ data }: { data: ItemDataType }) {
           <p className='text-[12px] sm:text-sm text-muted-foreground'>{`${data.location.district}, ${data.location.city}, ${data.location.country}`}</p>
           <p className='mt-2 text-[12px] sm:text-sm '>Bid Increment: ${data.bidIncrement}</p>
           <p className='text-[12px] sm:text-sm '>
-            Current Price: <span className='text-sm sm:text-lg font-semibold text-blue-500'>$1299</span>
+            Current Price:{' '}
+            <span className='text-sm sm:text-lg font-semibold text-blue-500'>$ {currentPrice.toLocaleString()}</span>
           </p>
         </CardContent>
         <Separator className='my-1' />

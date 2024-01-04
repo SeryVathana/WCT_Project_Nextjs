@@ -1,16 +1,13 @@
 import express, { RequestHandler } from 'express';
 import { initializeApp } from 'firebase/app';
-import { deleteObject, getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
+import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
 import firebaseConfig from '../configs/firebase.config';
-import multer from 'multer';
 
 const router = express.Router();
 
 initializeApp(firebaseConfig);
 
 const storage = getStorage();
-
-// const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/', async (req, res) => {
   res.send('hi');
@@ -50,6 +47,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
     return res.status(400).send(err);
   }
 };
+
 export const uploadMultipleFile = async (req: any, res: any) => {
   try {
     let filesRes: any = [];
@@ -83,24 +81,6 @@ export const uploadMultipleFile = async (req: any, res: any) => {
     return res.status(400).send(err);
   }
 };
-
-// export const deleteFile: RequestHandler = async (req, res) => {
-//   const filename = req.params.filename;
-//   try {
-//     const desertRef = ref(storage, `files/${filename}`);
-//     deleteObject(desertRef)
-//       .then(() => {
-//         // File deleted successfully
-//         res.send('Deleted');
-//       })
-//       .catch((error) => {
-//         // Uh-oh, an error occurred!
-//         res.send('error');
-//       });
-//   } catch (err) {
-//     return res.status(400).send(err);
-//   }
-// };
 
 const giveCurrentDateTime = () => {
   const today = new Date();

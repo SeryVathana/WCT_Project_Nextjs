@@ -1,17 +1,26 @@
 'use client';
 
-import Link from 'next/link';
-import MaxWidthWrapper from './MaxWidthWrapper';
-import { buttonVariants } from './ui/button';
+import { useEffect } from 'react';
 
-import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
+import axios from 'axios';
+
+import { useDispatch, useSelector } from 'react-redux';
 import { logIn, logOut } from '@/redux/features/auth-slice';
 import { RootState } from '@/redux/store';
-import { AlignJustify } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
+
+import { signOut } from 'firebase/auth';
+import { auth } from '@/configs/firebase-config';
+
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+import MaxWidthWrapper from './MaxWidthWrapper';
+
+import { buttonVariants } from './ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Separator } from './ui/separator';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +29,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/configs/firebase-config';
-import { useEffect } from 'react';
-import axios from 'axios';
+
+import { AlignJustify } from 'lucide-react';
 
 const NAVLINK = [
   {
@@ -52,31 +57,38 @@ const Navbar = () => {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
+    router.push('/sign-in');
     dispatch(logOut());
     signOut(auth);
-    router.push('/sign-in');
   };
 
   useEffect(() => {
-    auth.onAuthStateChanged(async (userCred) => {
-      if (userCred) {
-        const userRes = await axios.get(`http://localhost:5000/user/${userCred.uid}`);
-        const userData = userRes.data[0];
+    if (!auth.currentUser) {
+      auth.onAuthStateChanged(async (userCred) => {
+        if (userCred) {
+          const token = await userCred.getIdToken();
+          const userRes = await axios.get(`http://localhost:5000/user/${userCred.uid}`);
+          const userData = await userRes.data[0];
 
-        const token = await userCred.getIdToken();
+          if (userData) {
+            // console.log(userData);
 
-        dispatch(
-          logIn({
-            uid: userCred.uid,
-            username: userData.lastName + ' ' + userData.firstName,
-            email: userData.email,
-            token: token,
-            pfURL: userData.photoURL,
-          })
-        );
-      }
-    });
-  }, [dispatch]);
+            dispatch(
+              logIn({
+                uid: userCred.uid,
+                username: userData.lastName + ' ' + userData.firstName,
+                email: userData.email,
+                token: token,
+                pfURL: userData.photoURL,
+                isModerator: userData.isModerator,
+              })
+            );
+            localStorage.setItem('auth', 'true');
+          }
+        }
+      });
+    }
+  }, []);
 
   return (
     <div className=' bg-white sticky top-0 z-50  border-b border-b-gray-100 h-16 flex items-center'>
@@ -119,7 +131,7 @@ const Navbar = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger className={cn('flex items-center gap-2', buttonVariants({ variant: 'ghost' }))}>
                     <Avatar className='w-8 h-8 border'>
-                      <AvatarImage src={user.userPfURL} />
+                      <AvatarImage src={user.userPfURL} className=' object-cover' sizes='100px' />
                       <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     {user.username}
@@ -169,6 +181,12 @@ const Navbar = () => {
                 {!user.isAuth ? null : (
                   <SheetTrigger className='transition-all hover:opacity-50 text-lg py-5'>
                     <Link href={'/profile'}>Profile</Link>
+                  </SheetTrigger>
+                )}
+
+                {!user.isAuth ? null : (
+                  <SheetTrigger className='transition-all hover:opacity-50 text-lg py-5'>
+                    <Link href={'/create-post'}>Create Post</Link>
                   </SheetTrigger>
                 )}
 

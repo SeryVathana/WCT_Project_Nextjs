@@ -33,9 +33,14 @@ export const getPost: RequestHandler = async (req, res, next) => {
 
   try {
     const post = await PostModel.findById(inputId).exec();
+
+    if (!post) {
+      throw new Error();
+    }
+
     res.status(200).json(post);
   } catch (err) {
-    console.log(err);
+    res.send({ message: err });
   }
 };
 
@@ -89,7 +94,7 @@ export const createPost: RequestHandler<unknown, unknown, CreatePostBody, unknow
     const newPost = await PostModel.create(inputData);
     res.status(200).json(newPost);
   } catch (err) {
-    console.log(err);
+    res.send({ message: err });
   }
 };
 
@@ -99,12 +104,11 @@ type UpdatePostParams = {
 
 type UpdatePostBody = {
   pending: boolean;
+  biddingHistory: object;
 };
 
-export const updatePost: RequestHandler<UpdatePostParams, unknown, UpdatePostBody, unknown> = async (req, res, next) => {
+export const updatePost: RequestHandler<UpdatePostParams, unknown, any, unknown> = async (req, res, next) => {
   const inputId = req.params.postid;
-
-  console.log(req.body.pending);
 
   try {
     const post = await PostModel.findById(inputId).exec();
@@ -113,7 +117,12 @@ export const updatePost: RequestHandler<UpdatePostParams, unknown, UpdatePostBod
       throw Error('No post founded');
     }
 
-    post.pending = req.body.pending;
+    if ('pending' in req.body) {
+      post.pending = req.body.pending;
+      console.log('Hi');
+    } else if ('biddingHistory' in req.body) {
+      post.biddingHistory.push(req.body.biddingHistory);
+    }
 
     const updatedPost = post.save();
 

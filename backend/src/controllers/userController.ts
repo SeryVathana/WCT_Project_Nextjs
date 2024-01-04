@@ -1,15 +1,5 @@
 import { RequestHandler } from 'express';
-import { auth } from '../configs/firebase.config';
-
 import UserModel from '../models/userSchema';
-
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { ObjectId } from 'mongodb';
-
-type SignInBody = {
-  email: string;
-  password: string;
-};
 
 export const getUser: RequestHandler = async (req, res, next) => {
   const inputId = req.params.id;
@@ -22,19 +12,7 @@ export const getUser: RequestHandler = async (req, res, next) => {
   }
 };
 
-// export const signInUser: RequestHandler<unknown, unknown, SignInBody, unknown> = async (req, res) => {
-//   const email = req.body.email;
-//   const password = req.body.password;
-
-//   try {
-//     const user = await signInWithEmailAndPassword(auth, email, password);
-//     res.send(user);
-//   } catch (err) {
-//     res.send(err);
-//   }
-// };
-
-type SignUpBody = {
+type CreateUserBody = {
   email: string;
   password: string;
   firstname: string;
@@ -42,17 +20,19 @@ type SignUpBody = {
   birthDate: string;
   photoURL: string;
   uid: string;
+  isModerator: boolean;
 };
 
-export const createUser: RequestHandler<unknown, unknown, SignUpBody, unknown> = async (req, res) => {
+export const createUser: RequestHandler<unknown, unknown, CreateUserBody, unknown> = async (req, res) => {
   const inputData = {
     _id: req.body.uid,
     firstName: req.body.firstname,
     lastName: req.body.lastname,
-    displayName: req.body.firstname + ' ' + req.body.lastname,
+    displayName: req.body.lastname + ' ' + req.body.firstname,
     photoURL: req.body.photoURL,
     birthDate: req.body.birthDate,
     email: req.body.email,
+    isModerator: false,
   };
 
   try {

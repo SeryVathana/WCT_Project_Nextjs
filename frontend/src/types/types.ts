@@ -19,9 +19,10 @@ export type ImgType = {
 };
 
 export type BidHistoryType = {
+  bidderId: string;
   bidder: string;
-  price: string;
-  date: Date;
+  price: number;
+  date: string;
 };
 
 export type LocationType = {

@@ -35,7 +35,7 @@ const SignUp = () => {
   useEffect(() => {
     auth.onAuthStateChanged(async (userCred) => {
       if (userCred) {
-        // router.push('/');
+        router.push('/');
       }
     });
   });
@@ -58,26 +58,27 @@ const SignUp = () => {
       setErrorBirthDate(false);
     }
 
-    const newUserAcc = await createUserWithEmailAndPassword(auth, values.email, values.email);
+    const newUserAcc = await createUserWithEmailAndPassword(auth, values.email, values.password);
 
-    console.log(newUserAcc.user.uid);
     const reqBody = {
       ...values,
       photoURL: 'https://www2.deloitte.com/content/dam/Deloitte/nl/Images/promo_images/deloitte-nl-cm-digital-human-promo.jpg',
       birthDate: new Date(birthDate).toISOString(),
       uid: newUserAcc.user.uid,
+      isModerator: false,
     };
 
     const uploadedUserInfo = await axios.post('http://localhost:5000/user/create-user', { ...reqBody });
-    // dispatch(
-    //   logIn({
-    //     uid: uploadedUserInfo.data._id,
-    //     username: uploadedUserInfo.data.displayName,
-    //     email: uploadedUserInfo.data.email,
-    //     token: await newUserAcc.user.getIdToken(),
-    //     pfURL: uploadedUserInfo.data.photoURL,
-    //   })
-    // );
+    dispatch(
+      logIn({
+        uid: uploadedUserInfo.data._id,
+        username: uploadedUserInfo.data.displayName,
+        email: uploadedUserInfo.data.email,
+        token: await newUserAcc.user.getIdToken(),
+        pfURL: uploadedUserInfo.data.photoURL,
+        isModerator: uploadedUserInfo.data.isModerator,
+      })
+    );
     console.log(uploadedUserInfo.data);
   }
 

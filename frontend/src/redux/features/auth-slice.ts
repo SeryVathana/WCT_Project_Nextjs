@@ -20,6 +20,7 @@ const initialState = {
     username: 'Guest',
     userEmail: '',
     userToken: '',
+    // isAuth: localStorage.getItem('auth') == 'true' || false,
     isAuth: false,
     isModerator: false,
     userPfURL: '',
@@ -31,6 +32,7 @@ export const auth = createSlice({
   initialState,
   reducers: {
     logOut: () => {
+      localStorage.setItem('auth', 'false');
       return initialState;
     },
 
@@ -41,7 +43,7 @@ export const auth = createSlice({
           username: actions.payload.username,
           userID: actions.payload.uid,
           userEmail: actions.payload.email,
-          isModerator: true,
+          isModerator: actions.payload.isModerator,
           userToken: actions.payload.token,
           userPfURL: actions.payload.pfURL,
         },

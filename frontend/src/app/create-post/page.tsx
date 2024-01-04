@@ -13,19 +13,21 @@ import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
-import { ChangeEvent, FormEvent, ReactEventHandler, use, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { AspectRatio } from '../../components//ui/aspect-ratio';
 import { Button } from '../../components//ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 
-import axios from 'axios';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import { auth } from '@/configs/firebase-config';
-import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useAuth } from '@/customHooks/useAuth';
-import { logIn } from '@/redux/features/auth-slice';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+
+import { Toaster } from '@/components/ui/toaster';
+import { PRODUCT_CATEGORIES } from '@/data/List';
 
 type ImageResType = {
   storageFileName: string;
@@ -37,6 +39,9 @@ type ImageResType = {
 
 const CreatePost = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [category, setCategory] = useState('');
   const [errorCategory, setErrorCategory] = useState<boolean>(false);
 
@@ -51,27 +56,37 @@ const CreatePost = () => {
   const [endDate, setEndDate] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [errorDate, setErrorDate] = useState<boolean>(false);
-  const dispatch = useDispatch();
+  const [uploading, setUploading] = useState<boolean>(false);
 
-  const router = useRouter();
+  const resetInput = () => {
+    setUploading(false);
+    setCategory('');
+    setErrorCategory(false);
+    setDisplayImage('');
+    setDisplayFileImage('');
+    setErrorDisplayImage(false);
+    setOthersImage([]);
+    setOthersFileImage([]);
+    setErrorOthersImage(false);
+    setEndDate('');
+    setEndTime('');
+    setErrorDate(false);
+  };
 
   useEffect(() => {
     auth.onAuthStateChanged(async (userCred) => {
-      console.log(userCred);
-      if (userCred) {
-        const token = await userCred.getIdToken();
-        dispatch(logIn({ username: userCred.displayName, email: userCred.email, token: token }));
-        window.localStorage.setItem('auth', 'true');
+      if (!userCred) {
+        router.push('/sign-in');
       }
     });
-  }, []);
+  }, [router]);
 
   const formSchema = z.object({
     itemName: z.string({ required_error: 'Please enter item name' }).min(2, 'Input must be atleast 2 characters.').max(50),
     itemDescription: z
       .string({ required_error: 'Please enter item description' })
       .min(2, 'Input must be atleast 2 characters.')
-      .max(120),
+      .max(250),
     location: z.object({
       district: z.string({ required_error: 'Please enter bidding district' }).min(2).max(50),
       city: z.string({ required_error: 'Please enter bidding city' }).min(2).max(50),
@@ -128,6 +143,8 @@ const CreatePost = () => {
       setErrorCategory(false);
     }
 
+    setUploading(true);
+
     let displayImageObj;
     let othersImageObj: ImageResType[] = [];
 
@@ -155,8 +172,10 @@ const CreatePost = () => {
       othersImageObj = res.data;
     });
 
-    const endDateTime = new Date(endDate + ' ' + endTime).toISOString();
+    console.log(displayImageObj);
+    console.log(othersImageObj);
 
+    const endDateTime = new Date(endDate + ' ' + endTime).toISOString();
     const data = {
       ...values,
       displayImg: displayImageObj,
@@ -169,16 +188,19 @@ const CreatePost = () => {
         id: user.userID,
         name: user.username,
         email: user.userEmail,
-        pfImgURL: user.username,
+        pfImgURL: user.userPfURL,
       },
     };
-
-    console.log(data);
 
     axios
       .post('http://localhost:5000/api/posts', data)
       .then((res) => {
         console.log(res);
+        toast({
+          title: 'Post Submited',
+          description: 'Your post need to be reviewed by admin before go to public.',
+        });
+        resetInput();
       })
       .catch((err) => {
         console.log(err);
@@ -209,9 +231,18 @@ const CreatePost = () => {
 
   const handleDelete = async (inputData: any) => {
     setDisplayImage('');
+
+    setDisplayFileImage('');
   };
   const handleDeleteOthers = async (inputData: any) => {
+    const index = othersImage.findIndex((item) => item === inputData);
     setOthersImage((prev) => prev.filter((item) => item != inputData));
+    // setOthersFileImage((prev) => prev.splice(index));
+    const data = othersFileImage;
+    console.log(data);
+    data.splice(index, 1);
+    console.log(data);
+    setOthersFileImage(data);
   };
 
   useEffect(() => {
@@ -355,9 +386,13 @@ const CreatePost = () => {
                       <SelectValue placeholder='Pick a category' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='light'>Light</SelectItem>
-                      <SelectItem value='dark'>Dark</SelectItem>
-                      <SelectItem value='system'>System</SelectItem>
+                      {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
+                        return (
+                          <SelectItem key={cate} value={cate.toLowerCase()}>
+                            {cate}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   {errorCategory && <p className='text-sm font-medium text-destructive'>Category is required</p>}
@@ -459,8 +494,11 @@ const CreatePost = () => {
                   {errorDate && <p className='text-sm font-medium text-destructive'>End Date and Time is required</p>}
                 </div>
               </div>
+              <Toaster />
               <div className='flex justify-center'>
-                <Button type='submit'>Submit</Button>
+                <Button type='submit' disabled={uploading}>
+                  {uploading ? 'Loading' : 'Submit'}
+                </Button>
               </div>
             </form>
           </Form>

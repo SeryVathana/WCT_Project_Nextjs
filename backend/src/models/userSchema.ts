@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { InferSchemaType, Schema, model } from 'mongoose';
 
 const userSchema = new Schema(
@@ -11,6 +10,7 @@ const userSchema = new Schema(
     photoURL: { type: String },
     birthDate: { type: Date, require: true },
     email: { type: String, require: true },
+    isModerator: { type: Boolean, require: true },
   },
   { timestamps: true, _id: false }
 );
