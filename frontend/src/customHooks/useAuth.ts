@@ -5,7 +5,6 @@ import { useDispatch } from 'react-redux';
 export const useAuth = () => {
   const dispatch = useDispatch();
   auth.onAuthStateChanged(async (userCred) => {
-    console.log(userCred);
     if (userCred) {
       const token = await userCred.getIdToken();
       dispatch(logIn({ username: userCred.displayName, email: userCred.email, token: token }));

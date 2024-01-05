@@ -70,8 +70,6 @@ export const uploadMultipleFile = async (req: any, res: any) => {
           type: file.mimetype,
           downloadURL: downloadURL,
         });
-
-        console.log(filesRes);
       })
     );
 

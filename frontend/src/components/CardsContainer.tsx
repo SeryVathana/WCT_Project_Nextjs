@@ -36,9 +36,6 @@ const CardsContainer = ({
         },
       })
       .then((res) => {
-        console.log(selectedSort);
-        console.log(res.data);
-
         if (selectedSort) {
           if (selectedSort == 'name') {
             setData([...res.data].sort((a, b) => a.itemName.localeCompare(b.itemName)));

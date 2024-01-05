@@ -42,9 +42,7 @@ const SignIn = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(false);
     await signInWithEmailAndPassword(auth, values.email, values.password)
-      .then((res) => {
-        console.log(res);
-      })
+      .then((res) => {})
       .catch((err) => {
         setError(true);
       });

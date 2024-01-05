@@ -81,7 +81,6 @@ const SignUp = () => {
         isModerator: uploadedUserInfo.data.isModerator,
       })
     );
-    console.log(uploadedUserInfo.data);
   }
 
   return (

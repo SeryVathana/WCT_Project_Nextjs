@@ -161,7 +161,6 @@ const CreatePost = () => {
         }
       )
       .then((res) => {
-        console.log(res.data);
         displayImageObj = res.data;
       });
 
@@ -173,9 +172,6 @@ const CreatePost = () => {
     await axios.post(`${API_URL}/upload/multiple`, otherImgData).then((res) => {
       othersImageObj = res.data;
     });
-
-    console.log(displayImageObj);
-    console.log(othersImageObj);
 
     const endDateTime = new Date(endDate + ' ' + endTime).toISOString();
     const data = {
@@ -197,7 +193,6 @@ const CreatePost = () => {
     axios
       .post(`${API_URL}/api/posts`, data)
       .then((res) => {
-        console.log(res);
         toast({
           title: 'Post Submited',
           description: 'Your post need to be reviewed by admin before go to public.',
@@ -214,7 +209,7 @@ const CreatePost = () => {
 
     const inputData = e.target.files![0];
     const Url = URL.createObjectURL(inputData);
-    console.log(Url);
+
     setDisplayImage(Url);
     setDisplayFileImage(inputData);
   };
@@ -241,9 +236,9 @@ const CreatePost = () => {
     setOthersImage((prev) => prev.filter((item) => item != inputData));
     // setOthersFileImage((prev) => prev.splice(index));
     const data = othersFileImage;
-    console.log(data);
+
     data.splice(index, 1);
-    console.log(data);
+
     setOthersFileImage(data);
   };
 

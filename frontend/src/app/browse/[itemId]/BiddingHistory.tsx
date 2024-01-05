@@ -66,8 +66,6 @@ const BiddingHistory = ({
     }
 
     if (newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId === user.userID) {
-      console.log(user.userID);
-
       toast({
         variant: 'destructive',
         title: 'Your are the last bidder.',
@@ -82,7 +80,6 @@ const BiddingHistory = ({
       price: values.bidPrice,
       date: new Date(Date.now()).toISOString(),
     };
-    console.log(reqBody);
 
     await axios.patch(`${API_URL}/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(() => {
       setBidHistory((prev) => [...prev, reqBody]);

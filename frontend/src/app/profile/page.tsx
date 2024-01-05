@@ -335,8 +335,6 @@ const UserPostsTab = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
   const handleAccept = (inputItem: ItemDataType) => {
-    console.log(inputItem);
-
     const reqData = {
       pending: false,
     };
@@ -346,8 +344,6 @@ const UserPostsTab = () => {
     });
   };
   const handleRemove = (inputItem: ItemDataType) => {
-    console.log(inputItem);
-
     const reqData = {
       pending: true,
     };
@@ -362,7 +358,6 @@ const UserPostsTab = () => {
       .then((res) => res.json())
       .then((data: ItemDataType[]) => {
         setData(data);
-        console.log(data);
       })
       .catch((err) => {
         console.log(err);

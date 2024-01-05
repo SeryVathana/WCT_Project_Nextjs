@@ -10,8 +10,6 @@ export const getPosts: RequestHandler = async (req, res, next) => {
   }
 };
 export const getAcceptedPosts: RequestHandler = async (req, res, next) => {
-  console.log(req.query);
-
   const queryName = req.query.name;
   const queryCate = req.query.category;
 
