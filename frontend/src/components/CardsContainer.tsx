@@ -17,7 +17,7 @@ const CardsContainer = ({
   selectedSort = '',
   itemNumber,
 }: {
-  inputData: ItemDataType[];
+  inputData?: ItemDataType[];
   className?: string;
   searchTerm?: string;
   selectedCategory?: string;
