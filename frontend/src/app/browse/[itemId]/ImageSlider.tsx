@@ -14,11 +14,10 @@ const ImageSlider = ({ slides }: { slides: ImgType[] }) => {
         {slides?.map((slide: ImgType, index: number) => {
           return (
             <CarouselItem key={index}>
+              <Badge variant='secondary' className='absolute z-10 w-auto whitespace-nowrap mt-5 ml-5'>
+                {index + 1} / {slides?.length}
+              </Badge>
               <AspectRatio ratio={16 / 9}>
-                <Badge variant='secondary'>
-                  {index + 1} / {slides?.length}
-                </Badge>
-
                 <Image
                   src={slide.downloadURL}
                   priority
