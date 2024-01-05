@@ -41,7 +41,7 @@ const Homepage = async () => {
             <Link href={'/browse'}>See more &rarr;</Link>
           </Button>
         </div>
-        <CardsContainer itemNumber={4} className='mt-5' />
+        <CardsContainer inputData={data} itemNumber={4} className='mt-5' />
       </MaxWidthWrapper>
     </>
   );

@@ -10,19 +10,21 @@ import ItemCardSkeleton from './ItemCardSkeleton';
 const API_URL = 'https://auction-site-server.onrender.com';
 
 const CardsContainer = ({
+  inputData = [],
   className,
   searchTerm,
   selectedCategory,
   selectedSort = '',
   itemNumber,
 }: {
+  inputData: ItemDataType[];
   className?: string;
   searchTerm?: string;
   selectedCategory?: string;
   selectedSort?: string;
   itemNumber?: number;
 }) => {
-  const [data, setData] = useState<ItemDataType[]>([]);
+  const [data, setData] = useState<ItemDataType[]>(inputData);
   const [backUpData, setBackUpData] = useState<ItemDataType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
