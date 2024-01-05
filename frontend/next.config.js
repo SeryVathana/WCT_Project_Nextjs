@@ -3,7 +3,7 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'firebasestorage.googleapis.com', 'variety.com'],
   },
-  distDir: 'build',
+  // output: 'export',
 };
 
 module.exports = nextConfig;
