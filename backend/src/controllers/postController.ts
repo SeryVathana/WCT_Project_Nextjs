@@ -10,8 +10,40 @@ export const getPosts: RequestHandler = async (req, res, next) => {
   }
 };
 export const getAcceptedPosts: RequestHandler = async (req, res, next) => {
+  console.log(req.query);
+
+  const queryName = req.query.name;
+  const queryCate = req.query.category;
+
   try {
-    const postes = await PostModel.find({ pending: false });
+    let postes;
+
+    if (!queryName && (!queryCate || queryCate == 'all')) {
+      postes = await PostModel.find({
+        pending: false,
+      });
+    } else if (queryName && (!queryCate || queryCate == 'all')) {
+      postes = await PostModel.find({
+        pending: false,
+        itemName: { $regex: req.query.name, $options: 'i' },
+      });
+    } else if (!queryName && queryCate) {
+      postes = await PostModel.find({
+        pending: false,
+        category: req.query.category,
+      });
+    } else if (queryName && queryCate) {
+      postes = await PostModel.find({
+        pending: false,
+        itemName: { $regex: req.query.name, $options: 'i' },
+        category: req.query.category,
+      });
+    }
+
+    if (!postes) {
+      res.status(200).json([]);
+    }
+
     res.status(200).json(postes);
   } catch (err) {
     console.log(err);
@@ -19,7 +51,6 @@ export const getAcceptedPosts: RequestHandler = async (req, res, next) => {
 };
 
 export const getMyPosts: RequestHandler = async (req, res, next) => {
-  console.log(req.params.uid);
   try {
     const postes = await PostModel.find({ 'seller.id': req.params.uid });
     res.status(200).json(postes);
@@ -88,8 +119,6 @@ type CreatePostBody = {
 export const createPost: RequestHandler<unknown, unknown, CreatePostBody, unknown> = async (req, res, next) => {
   const inputData = req.body;
 
-  console.log(inputData);
-
   try {
     const newPost = await PostModel.create(inputData);
     res.status(200).json(newPost);
@@ -119,7 +148,6 @@ export const updatePost: RequestHandler<UpdatePostParams, unknown, any, unknown>
 
     if ('pending' in req.body) {
       post.pending = req.body.pending;
-      console.log('Hi');
     } else if ('biddingHistory' in req.body) {
       post.biddingHistory.push(req.body.biddingHistory);
     }

@@ -66,13 +66,13 @@ const Navbar = () => {
     if (!auth.currentUser) {
       auth.onAuthStateChanged(async (userCred) => {
         if (userCred) {
+          console.log(userCred);
+
           const token = await userCred.getIdToken();
           const userRes = await axios.get(`http://localhost:5000/user/${userCred.uid}`);
           const userData = await userRes.data[0];
-
           if (userData) {
             // console.log(userData);
-
             dispatch(
               logIn({
                 uid: userCred.uid,

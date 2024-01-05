@@ -49,7 +49,7 @@ const Profile = () => {
         router.push('/sign-in');
       }
     });
-  }, []);
+  }, [user.isAuth, router]);
 
   return (
     <MaxWidthWrapper className='min-h-screen py-5'>
@@ -92,7 +92,7 @@ const ProfileTab = () => {
   const [userInfo, setUserInfo] = useState<UserInfoType>();
 
   useEffect(() => {
-    if (auth.currentUser) {
+    if (user.isAuth) {
       axios.get(`http://localhost:5000/user/${user.userID}`).then((res) => {
         setUserInfo(res.data[0]);
       });
@@ -296,7 +296,14 @@ const MyPostsTab = () => {
                         <p className=' text-muted-foreground'>{item.itemDescription}</p>
                       </div>
                     </div>
-                    {!item.pending ? null : (
+                    {!item.pending ? (
+                      <div className='mt-5'>
+                        <h1 className='text-md mb-3 text-destructive'>
+                          Your post has been accepted. You can not change right now.
+                        </h1>
+                        <Button>Request for change</Button>
+                      </div>
+                    ) : (
                       <div className='mt-5'>
                         <DialogDemo data={item} />
                       </div>

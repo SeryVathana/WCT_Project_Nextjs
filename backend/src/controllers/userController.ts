@@ -6,9 +6,14 @@ export const getUser: RequestHandler = async (req, res, next) => {
 
   try {
     const user = await UserModel.find({ _id: inputId });
+
+    if (!user) {
+      res.send(404).json({ message: 'user not found' });
+    }
+
     res.status(200).json(user);
   } catch (err) {
-    console.log(err);
+    res.send(404).json({ message: 'user not found' });
   }
 };
 

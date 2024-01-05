@@ -1,32 +1,53 @@
+'use client';
+
 import CardsContainer from '@/components/CardsContainer';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
-import Link from 'next/link';
 
 import { PRODUCT_CATEGORIES } from '@/data/List';
-import { cn } from '@/lib/utils';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search } from 'lucide-react';
+import { ChangeEvent, useState } from 'react';
 
-const getItems = async () => {
-  const res = await fetch('http://localhost:5000/api/posts', { cache: 'no-store' });
-  const data = await res.json();
+const Browse = () => {
+  const [filter, setFilter] = useState({ searchTerm: '', selectedCategory: '' });
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSort, setSelectedSort] = useState<string>('');
 
-  return data;
-};
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setFilter({ searchTerm: e.target.value, selectedCategory });
+  };
 
-const Browse = async () => {
-  const data = await getItems();
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val);
+    setFilter({ searchTerm, selectedCategory: val });
+  };
+
+  const handleSortChange = (val: string) => {
+    setSelectedSort(val);
+  };
 
   return (
     <MaxWidthWrapper className='my-10 px-5 xl:px-20 gap-5 min-h-[70vh]'>
       <div className=' xl:col-span-10 md:ml-1'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-col sm:flex-row sm:items-end sm:justify-between'>
           <h1 className=' text-2xl font-semibold'>All Items</h1>
-          <div className='flex gap-2 mt-5 sm:mt-0'>
+          <div className='flex items-end gap-2 mt-5 sm:mt-0'>
+            <div className='relative mr-5'>
+              <Input
+                className='lg:w-[300px] pr-10'
+                placeholder='Search item by name'
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e)}
+              />
+              <Search className='absolute right-3 -translate-y-1/2 top-1/2 w-5 text-muted-foreground' />
+            </div>
             <div className=''>
               <p className='mb-2'>Categories:</p>
-              <Select defaultValue='all'>
+              <Select defaultValue='all' onValueChange={(val) => handleCategoryChange(val)}>
                 <SelectTrigger className='w-[150px] md:w-[180px]'>
                   <SelectValue placeholder='Sort By' />
                 </SelectTrigger>
@@ -41,7 +62,7 @@ const Browse = async () => {
             </div>
             <div>
               <p className='mb-2'>Sort By:</p>
-              <Select defaultValue='default'>
+              <Select defaultValue='default' onValueChange={(val) => handleSortChange(val)}>
                 <SelectTrigger className='w-[100px] md:w-[180px]'>
                   <SelectValue placeholder='Sort By' />
                 </SelectTrigger>
@@ -56,7 +77,12 @@ const Browse = async () => {
           </div>
         </div>
 
-        <CardsContainer data={data} className='mt-5 md:grid-cols-2' />
+        <CardsContainer
+          className='mt-10 md:grid-cols-2'
+          searchTerm={filter.searchTerm}
+          selectedCategory={filter.selectedCategory}
+          selectedSort={selectedSort}
+        />
       </div>
     </MaxWidthWrapper>
   );
