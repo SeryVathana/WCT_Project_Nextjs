@@ -304,9 +304,7 @@ const MyPostsTab = () => {
                         <Button>Request for change</Button>
                       </div>
                     ) : (
-                      <div className='mt-5'>
-                        <DialogDemo data={item} />
-                      </div>
+                      <div className='mt-5'>{/* <DialogDemo data={item} /> */}</div>
                     )}
                   </div>
                 </AccordionContent>
@@ -535,55 +533,55 @@ const UserPostsTab = () => {
   );
 };
 
-export function DialogDemo({ data }: { data: ItemDataType }) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant='outline'>Edit</Button>
-      </DialogTrigger>
-      <DialogContent className='sm:max-w-[600px]'>
-        <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
-        </DialogHeader>
-        <div className='grid gap-4 py-4'>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='name' className='text-right'>
-              Item Name
-            </Label>
-            <Input id='name' defaultValue={data.itemName} className='col-span-3' />
-          </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='username' className='text-right'>
-              Description
-            </Label>
-            <Textarea id='username' defaultValue={data.itemDescription} className='col-span-3' />
-          </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='username' className='text-right'>
-              Category
-            </Label>
-            <Select defaultValue={data.category}>
-              <SelectTrigger className='col-span-3'>
-                <SelectValue placeholder='Pick a category' />
-              </SelectTrigger>
-              <SelectContent>
-                {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
-                  return (
-                    <SelectItem key={cate} value={cate.toLowerCase()}>
-                      {cate}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type='submit'>Save changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// export function DialogDemo({ data }: { data: ItemDataType }) {
+//   return (
+//     <Dialog>
+//       <DialogTrigger asChild>
+//         <Button variant='outline'>Edit</Button>
+//       </DialogTrigger>
+//       <DialogContent className='sm:max-w-[600px]'>
+//         <DialogHeader>
+//           <DialogTitle>Edit Item</DialogTitle>
+//         </DialogHeader>
+//         <div className='grid gap-4 py-4'>
+//           <div className='grid grid-cols-4 items-center gap-4'>
+//             <Label htmlFor='name' className='text-right'>
+//               Item Name
+//             </Label>
+//             <Input id='name' defaultValue={data.itemName} className='col-span-3' />
+//           </div>
+//           <div className='grid grid-cols-4 items-center gap-4'>
+//             <Label htmlFor='username' className='text-right'>
+//               Description
+//             </Label>
+//             <Textarea id='username' defaultValue={data.itemDescription} className='col-span-3' />
+//           </div>
+//           <div className='grid grid-cols-4 items-center gap-4'>
+//             <Label htmlFor='username' className='text-right'>
+//               Category
+//             </Label>
+//             <Select defaultValue={data.category}>
+//               <SelectTrigger className='col-span-3'>
+//                 <SelectValue placeholder='Pick a category' />
+//               </SelectTrigger>
+//               <SelectContent>
+//                 {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
+//                   return (
+//                     <SelectItem key={cate} value={cate.toLowerCase()}>
+//                       {cate}
+//                     </SelectItem>
+//                   );
+//                 })}
+//               </SelectContent>
+//             </Select>
+//           </div>
+//         </div>
+//         <DialogFooter>
+//           <Button type='submit'>Save changes</Button>
+//         </DialogFooter>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// }
 
 export default Profile;
