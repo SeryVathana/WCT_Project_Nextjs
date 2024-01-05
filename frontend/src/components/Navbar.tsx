@@ -65,28 +65,26 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      auth.onAuthStateChanged(async (userCred) => {
-        if (userCred) {
-          const token = await userCred.getIdToken();
-          const userRes = await axios.get(`${API_URL}/user/${userCred.uid}`);
-          const userData = await userRes.data[0];
-          if (userData) {
-            dispatch(
-              logIn({
-                uid: userCred.uid,
-                username: userData.lastName + ' ' + userData.firstName,
-                email: userData.email,
-                token: token,
-                pfURL: userData.photoURL,
-                isModerator: userData.isModerator,
-              })
-            );
-            localStorage.setItem('auth', 'true');
-          }
+    auth.onAuthStateChanged(async (userCred) => {
+      if (userCred) {
+        const token = await userCred.getIdToken();
+        const userRes = await axios.get(`${API_URL}/user/${userCred.uid}`);
+        const userData = await userRes.data[0];
+        if (userData) {
+          dispatch(
+            logIn({
+              uid: userCred.uid,
+              username: userData.lastName + ' ' + userData.firstName,
+              email: userData.email,
+              token: token,
+              pfURL: userData.photoURL,
+              isModerator: userData.isModerator,
+            })
+          );
+          localStorage.setItem('auth', 'true');
         }
-      });
-    }
+      }
+    });
   }, []);
 
   return (
