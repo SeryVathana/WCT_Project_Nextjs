@@ -3,7 +3,7 @@ import env from './utils/envValidate';
 import app from './app';
 import mongoose from 'mongoose';
 
-const PORT = env.PORT;
+const PORT = env.PORT || 5000;
 
 mongoose
   .connect(env.MONGO_CONNECTION_STRING)

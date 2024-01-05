@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const BiddingHistory = dynamic(() => import('./BiddingHistory'), { ssr: false });
+const API_URL = 'https://auction-site-server.onrender.com';
 
 const ItemDetails = ({ params }: { params: { itemId: string } }) => {
   const [data, setData] = useState<ItemDataType>();
@@ -23,7 +24,7 @@ const ItemDetails = ({ params }: { params: { itemId: string } }) => {
   const [currentPrice, setCurrentPrice] = useState<number>(0);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/posts/${params.itemId}`).then((res) => {
+    axios.get(`${API_URL}/api/posts/${params.itemId}`).then((res) => {
       setData(res.data);
       setBiddingHistory(res.data.biddingHistory);
       setSlides([res.data.displayImg, ...res.data?.othersImg]);

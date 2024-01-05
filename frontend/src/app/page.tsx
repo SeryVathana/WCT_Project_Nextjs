@@ -3,8 +3,9 @@ import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+const API_URL = 'https://auction-site-server.onrender.com';
 const getItem = async () => {
-  const data = await fetch('http://localhost:5000/api/posts', { cache: 'no-cache' });
+  const data = await fetch(`${API_URL}/api/posts`, { cache: 'no-cache' });
   return data.json();
 };
 

@@ -32,6 +32,8 @@ import {
 
 import { AlignJustify } from 'lucide-react';
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const NAVLINK = [
   {
     label: 'Home',
@@ -69,7 +71,7 @@ const Navbar = () => {
           console.log(userCred);
 
           const token = await userCred.getIdToken();
-          const userRes = await axios.get(`http://localhost:5000/user/${userCred.uid}`);
+          const userRes = await axios.get(`${API_URL}/user/${userCred.uid}`);
           const userData = await userRes.data[0];
           if (userData) {
             // console.log(userData);

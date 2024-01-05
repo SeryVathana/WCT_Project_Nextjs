@@ -19,6 +19,8 @@ import axios from 'axios';
 import { logIn } from '@/redux/features/auth-slice';
 import { useDispatch } from 'react-redux';
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const formSchema = z.object({
   firstname: z.string().min(2).max(10),
   lastname: z.string().min(2).max(10),
@@ -68,7 +70,7 @@ const SignUp = () => {
       isModerator: false,
     };
 
-    const uploadedUserInfo = await axios.post('http://localhost:5000/user/create-user', { ...reqBody });
+    const uploadedUserInfo = await axios.post(`${API_URL}/user/create-user`, { ...reqBody });
     dispatch(
       logIn({
         uid: uploadedUserInfo.data._id,

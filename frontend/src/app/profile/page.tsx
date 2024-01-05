@@ -39,6 +39,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PRODUCT_CATEGORIES } from '@/data/List';
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const Profile = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
 
@@ -93,7 +95,7 @@ const ProfileTab = () => {
 
   useEffect(() => {
     if (user.isAuth) {
-      axios.get(`http://localhost:5000/user/${user.userID}`).then((res) => {
+      axios.get(`${API_URL}/user/${user.userID}`).then((res) => {
         setUserInfo(res.data[0]);
       });
     }
@@ -158,7 +160,7 @@ const MyPostsTab = () => {
 
   useEffect(() => {
     if (auth.currentUser) {
-      axios.get(`http://localhost:5000/api/posts/mypost/${user.userID}`).then((res) => setData(res.data));
+      axios.get(`${API_URL}/api/posts/mypost/${user.userID}`).then((res) => setData(res.data));
     }
   }, [user.userID]);
 
@@ -339,7 +341,7 @@ const UserPostsTab = () => {
       pending: false,
     };
 
-    axios.patch(`http://localhost:5000/api/posts/${inputItem._id}`, reqData).then(() => {
+    axios.patch(`${API_URL}/api/posts/${inputItem._id}`, reqData).then(() => {
       setData((prev) => prev?.map((item) => (item._id === inputItem._id ? { ...item, pending: false } : item)));
     });
   };
@@ -350,13 +352,13 @@ const UserPostsTab = () => {
       pending: true,
     };
 
-    axios.patch(`http://localhost:5000/api/posts/${inputItem._id}`, reqData).then(() => {
+    axios.patch(`${API_URL}/api/posts/${inputItem._id}`, reqData).then(() => {
       setData((prev) => prev?.map((item) => (item._id === inputItem._id ? { ...item, pending: true } : item)));
     });
   };
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/posts/pending')
+    fetch(`${API_URL}/api/posts/pending`)
       .then((res) => res.json())
       .then((data: ItemDataType[]) => {
         setData(data);

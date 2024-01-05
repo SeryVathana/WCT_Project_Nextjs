@@ -37,6 +37,8 @@ type ImageResType = {
   type: string;
 };
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const CreatePost = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
   const router = useRouter();
@@ -150,7 +152,7 @@ const CreatePost = () => {
 
     await axios
       .post(
-        'http://localhost:5000/upload',
+        `${API_URL}/upload`,
         { filename: displayFileImage },
         {
           headers: {
@@ -168,7 +170,7 @@ const CreatePost = () => {
       otherImgData.append('filename', file);
     });
 
-    await axios.post('http://localhost:5000/upload/multiple', otherImgData).then((res) => {
+    await axios.post(`${API_URL}/upload/multiple`, otherImgData).then((res) => {
       othersImageObj = res.data;
     });
 
@@ -193,7 +195,7 @@ const CreatePost = () => {
     };
 
     axios
-      .post('http://localhost:5000/api/posts', data)
+      .post(`${API_URL}/api/posts`, data)
       .then((res) => {
         console.log(res);
         toast({

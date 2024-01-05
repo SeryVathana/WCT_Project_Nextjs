@@ -21,6 +21,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { auth } from '@/configs/firebase-config';
 import { useRouter } from 'next/navigation';
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const BiddingHistory = ({
   data,
   bidHistory,
@@ -55,7 +57,7 @@ const BiddingHistory = ({
       return;
     }
 
-    const newUpdate = await axios.get(`http://localhost:5000/api/posts/${data?._id}`);
+    const newUpdate = await axios.get(`${API_URL}/api/posts/${data?._id}`);
     const newUpdateData: ItemDataType = await newUpdate.data;
 
     if (newUpdateData?.pending) {
@@ -82,7 +84,7 @@ const BiddingHistory = ({
     };
     console.log(reqBody);
 
-    await axios.patch(`http://localhost:5000/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(() => {
+    await axios.patch(`${API_URL}/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(() => {
       setBidHistory((prev) => [...prev, reqBody]);
       setCurrentPrice((prev) => prev + values.bidPrice);
     });

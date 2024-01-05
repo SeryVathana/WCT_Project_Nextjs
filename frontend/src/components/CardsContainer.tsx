@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import ItemCardSkeleton from './ItemCardSkeleton';
 
+const API_URL = 'https://auction-site-server.onrender.com';
+
 const CardsContainer = ({
   className,
   searchTerm,
@@ -27,7 +29,7 @@ const CardsContainer = ({
   useEffect(() => {
     setLoading(true);
     axios
-      .get('http://localhost:5000/api/posts', {
+      .get(`${API_URL}/api/posts`, {
         params: {
           name: searchTerm,
           category: selectedCategory,
