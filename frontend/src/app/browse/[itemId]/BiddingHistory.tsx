@@ -8,7 +8,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ItemDataType, BidHistoryType } from '@/types/types';
 import { useForm } from 'react-hook-form';
 
-import { z } from 'zod';
+import { string, z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import axios from 'axios';
@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { auth } from '@/configs/firebase-config';
 import { useRouter } from 'next/navigation';
+import { sendEmail } from '@/app/sendEmail';
 
 const API_URL = 'https://auction-site-server.onrender.com';
 
@@ -65,7 +66,10 @@ const BiddingHistory = ({
       return;
     }
 
-    if (newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId === user.userID) {
+    if (
+      newUpdateData.biddingHistory.length != 0 &&
+      newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId === user.userID
+    ) {
       toast({
         variant: 'destructive',
         title: 'Your are the last bidder.',
@@ -81,9 +85,28 @@ const BiddingHistory = ({
       date: new Date(Date.now()).toISOString(),
     };
 
-    await axios.patch(`${API_URL}/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(() => {
+    await axios.patch(`${API_URL}/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(async () => {
       setBidHistory((prev) => [...prev, reqBody]);
       setCurrentPrice((prev) => prev + values.bidPrice);
+
+      await axios
+        .get(`${API_URL}/user/${newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId}`)
+        .then((res: any) => {
+          const lastBidAmount = newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].price;
+          const lastBidder = res.data[0];
+          toast({
+            title: 'You just placed a bid.',
+            description: 'Good Luck!',
+          });
+          sendEmail(
+            lastBidder.email,
+            'Someone bid over you.',
+            lastBidder.displayName,
+            data.itemName,
+            lastBidAmount,
+            `https://auction-site-wct.vercel.app/browse/${data._id}`
+          );
+        });
     });
   };
 

@@ -1,6 +1,8 @@
 import CardsContainer from '@/components/CardsContainer';
+import { EmailTemplate } from '@/components/EmailTemplate';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { Button } from '@/components/ui/button';
+import { auth } from '@/configs/firebase-config';
 import Link from 'next/link';
 
 const API_URL = 'https://auction-site-server.onrender.com';
@@ -25,10 +27,7 @@ const Homepage = async () => {
         </p>
 
         <div className='flex flex-col sm:flex-row gap-10 mt-10'>
-          <Button asChild size={'lg'}>
-            <Link href='/sign-up'>Join Us</Link>
-          </Button>
-          <Button asChild variant={'link'} size={'lg'}>
+          <Button asChild variant='default' size={'lg'}>
             <Link href='/browse'>Browse more &rarr;</Link>
           </Button>
         </div>
@@ -36,7 +35,7 @@ const Homepage = async () => {
 
       <MaxWidthWrapper className='my-20'>
         <div className='flex items-center justify-between'>
-          <h1 className=' text-2xl font-semibold'>Popular Bidding</h1>
+          <h1 className=' text-2xl font-semibold'>We got for you</h1>
 
           <Button asChild variant={'ghost'}>
             <Link href={'/browse'}>See more &rarr;</Link>

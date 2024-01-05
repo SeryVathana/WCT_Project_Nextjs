@@ -9,10 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 import ImageSlider from './ImageSlider';
 
-import { BidHistoryType, ImgType, ItemDataType, sliderArray } from '@/types/types';
+import { BidHistoryType, ImgType, ItemDataType } from '@/types/types';
+import axios from 'axios';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 
 const BiddingHistory = dynamic(() => import('./BiddingHistory'), { ssr: false });
 const API_URL = 'https://auction-site-server.onrender.com';
@@ -28,11 +28,10 @@ const ItemDetails = ({ params }: { params: { itemId: string } }) => {
       setData(res.data);
       setBiddingHistory(res.data.biddingHistory);
       setSlides([res.data.displayImg, ...res.data?.othersImg]);
-      // setCurrentPrice(res.data.biddingHistory.map(() =))
       const total = res.data.biddingHistory.reduce((sum: number, item: BidHistoryType) => sum + item.price, 0);
       setCurrentPrice(total + res.data.initialPrice);
     });
-  }, []);
+  }, [params.itemId]);
 
   return (
     <MaxWidthWrapper className='my-10 grid grid-cols-2 gap-2 md:gap-5'>
@@ -84,11 +83,11 @@ const ItemDetails = ({ params }: { params: { itemId: string } }) => {
               </TableRow>
               <TableRow>
                 <TableCell className='font-medium'>Start Price</TableCell>
-                <TableCell>$ {data?.initialPrice}</TableCell>
+                <TableCell>$ {data?.initialPrice.toLocaleString()}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className='font-medium'>Bid Increment</TableCell>
-                <TableCell>$ {data?.bidIncrement}</TableCell>
+                <TableCell>$ {data?.bidIncrement.toLocaleString()}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className='font-medium'>Current Price</TableCell>
