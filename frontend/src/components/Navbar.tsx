@@ -164,17 +164,13 @@ const Navbar = () => {
                 })}
                 <Separator />
                 {user.isAuth ? null : (
-                  <SheetTrigger>
-                    <Link href={'/sign-in'} className='transition-all hover:opacity-50 text-lg py-5'>
-                      Sign In
-                    </Link>
+                  <SheetTrigger className='transition-all hover:opacity-50 text-lg py-5'>
+                    <Link href={'/sign-in'}>Sign In</Link>
                   </SheetTrigger>
                 )}
                 {user.isAuth ? null : (
-                  <SheetTrigger>
-                    <Link href={'/sign-up'} className='transition-all hover:opacity-50 text-lg py-5'>
-                      Create an account
-                    </Link>
+                  <SheetTrigger className='transition-all hover:opacity-50 text-lg py-5'>
+                    <Link href={'/sign-up'}>Create an account</Link>
                   </SheetTrigger>
                 )}
                 {!user.isAuth ? null : (

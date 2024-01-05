@@ -35,20 +35,21 @@ const Browse = () => {
       <div className=' xl:col-span-10 md:ml-1'>
         <div className='flex flex-col sm:flex-row sm:items-end sm:justify-between'>
           <h1 className=' text-2xl font-semibold'>All Items</h1>
-          <div className='flex items-end gap-2 mt-5 sm:mt-0'>
-            <div className='relative mr-5'>
+          <div className='grid flex-grow grid-cols-12 items-end gap-2 mt-5 sm:mt-0  sm:ml-5 max-w-[800px]'>
+            <div className='relative col-span-12 sm:col-span-6 flex items-center h-fit'>
               <Input
-                className='lg:w-[300px] pr-10'
+                className='flex-grow full w-full pr-10'
                 placeholder='Search item by name'
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e)}
               />
               <Search className='absolute right-3 -translate-y-1/2 top-1/2 w-5 text-muted-foreground' />
             </div>
-            <div className=''>
+
+            <div className=' col-span-6 sm:col-span-3'>
               <p className='mb-2'>Categories:</p>
               <Select defaultValue='all' onValueChange={(val) => handleCategoryChange(val)}>
-                <SelectTrigger className='w-[150px] md:w-[180px]'>
+                <SelectTrigger className=''>
                   <SelectValue placeholder='Sort By' />
                 </SelectTrigger>
                 <SelectContent>
@@ -60,10 +61,10 @@ const Browse = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className=' col-span-6 sm:col-span-3'>
               <p className='mb-2'>Sort By:</p>
               <Select defaultValue='default' onValueChange={(val) => handleSortChange(val)}>
-                <SelectTrigger className='w-[100px] md:w-[180px]'>
+                <SelectTrigger className=''>
                   <SelectValue placeholder='Sort By' />
                 </SelectTrigger>
                 <SelectContent>
