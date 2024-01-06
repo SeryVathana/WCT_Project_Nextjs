@@ -16,16 +16,15 @@ const getItem = async () => {
   if (!res.ok) {
     // This will activate the closest `error.js` Error Boundary
     throw new Error('Failed to fetch data');
-  } else {
-    return res.json();
   }
+  return res.json();
 };
 
-export const preload = () => {
-  // void evaluates the given expression and returns undefined
-  // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/void
-  void getItem();
-};
+// export const preload = () => {
+//   // void evaluates the given expression and returns undefined
+//   // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/void
+//   void getItem();
+// };
 
 const Homepage = async () => {
   const data = await getItem();
