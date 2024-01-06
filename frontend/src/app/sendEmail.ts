@@ -13,10 +13,12 @@ export const sendEmail = async (
   lastBidAmount: number,
   itemLink: string
 ) => {
+  'use server';
   resend.emails.send({
     from: 'Auctionaire <onboarding@resend.dev>',
     to: email,
     subject: subject,
+    // text: 'hi',
     react: React.createElement(EmailTemplate, {
       recName: name,
       itemName: itemName,

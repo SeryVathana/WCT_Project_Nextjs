@@ -20,6 +20,7 @@ import { logIn } from '@/redux/features/auth-slice';
 import { useDispatch } from 'react-redux';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Search } from 'lucide-react';
+import { sendEmail } from '../sendEmail';
 
 const API_URL = 'https://auction-site-server.onrender.com';
 
@@ -57,12 +58,12 @@ const SignUp = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setLoading(true);
     if (new Date(Date.now()).getFullYear() - new Date(birthDate).getFullYear() < 18) {
       setErrorBirthDate(true);
       return;
     } else {
       setErrorBirthDate(false);
+      setLoading(true);
     }
 
     await createUserWithEmailAndPassword(auth, values.email, values.password)

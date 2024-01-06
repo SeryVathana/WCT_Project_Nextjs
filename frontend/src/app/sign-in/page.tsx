@@ -19,6 +19,7 @@ import { auth } from '../../configs/firebase-config';
 
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { sendEmail } from '../sendEmail';
 
 const SignIn = () => {
   const router = useRouter();
