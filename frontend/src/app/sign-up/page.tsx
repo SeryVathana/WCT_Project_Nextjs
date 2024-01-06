@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import axios from 'axios';
 import { logIn } from '@/redux/features/auth-slice';
 import { useDispatch } from 'react-redux';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Search } from 'lucide-react';
 
 const API_URL = 'https://auction-site-server.onrender.com';
 
@@ -33,6 +35,8 @@ const SignUp = () => {
   const dispatch = useDispatch();
   const [birthDate, setBirthDate] = useState<string>('');
   const [errorBirthDate, setErrorBirthDate] = useState<boolean>(false);
+  const [emailError, setEmailError] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     auth.onAuthStateChanged(async (userCred) => {
@@ -53,6 +57,7 @@ const SignUp = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
     if (new Date(Date.now()).getFullYear() - new Date(birthDate).getFullYear() < 18) {
       setErrorBirthDate(true);
       return;
@@ -60,27 +65,36 @@ const SignUp = () => {
       setErrorBirthDate(false);
     }
 
-    const newUserAcc = await createUserWithEmailAndPassword(auth, values.email, values.password);
+    await createUserWithEmailAndPassword(auth, values.email, values.password)
+      .then(async (newUser) => {
+        const reqBody = {
+          ...values,
+          photoURL:
+            'https://www2.deloitte.com/content/dam/Deloitte/nl/Images/promo_images/deloitte-nl-cm-digital-human-promo.jpg',
+          birthDate: new Date(birthDate).toISOString(),
+          uid: newUser.user.uid,
+          isModerator: false,
+        };
 
-    const reqBody = {
-      ...values,
-      photoURL: 'https://www2.deloitte.com/content/dam/Deloitte/nl/Images/promo_images/deloitte-nl-cm-digital-human-promo.jpg',
-      birthDate: new Date(birthDate).toISOString(),
-      uid: newUserAcc.user.uid,
-      isModerator: false,
-    };
-
-    const uploadedUserInfo = await axios.post(`${API_URL}/user/create-user`, { ...reqBody });
-    dispatch(
-      logIn({
-        uid: uploadedUserInfo.data._id,
-        username: uploadedUserInfo.data.displayName,
-        email: uploadedUserInfo.data.email,
-        token: await newUserAcc.user.getIdToken(),
-        pfURL: uploadedUserInfo.data.photoURL,
-        isModerator: uploadedUserInfo.data.isModerator,
+        await axios.post(`${API_URL}/user/create-user`, { ...reqBody }).then(async (uploadedUserInfo) => {
+          dispatch(
+            logIn({
+              uid: uploadedUserInfo.data._id,
+              username: uploadedUserInfo.data.displayName,
+              email: uploadedUserInfo.data.email,
+              token: await newUser.user.getIdToken(),
+              pfURL: uploadedUserInfo.data.photoURL,
+              isModerator: uploadedUserInfo.data.isModerator,
+            })
+          );
+        });
       })
-    );
+      .catch((err) => {
+        if (err.code == 'auth/email-already-in-use') {
+          setEmailError(true);
+        }
+      });
+    setLoading(false);
   }
 
   return (
@@ -88,6 +102,7 @@ const SignUp = () => {
       <div className='w-[90%] md:w-[500px] xl:w-[500px]'>
         <h1 className='text-center text-3xl font-semibold'>Create an account</h1>
         <h1 className='text-center text-2xl font-semibold my-5'>Join us now</h1>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 '>
             <div className='flex gap-5'>
@@ -181,8 +196,11 @@ const SignUp = () => {
                 </label>
               </div>
             </div>
+            {emailError && <AlertDestructive />}
             <div className=' w-full flex justify-center py-5'>
-              <Button type='submit'>Sign Up</Button>
+              <Button type='submit' disabled={loading}>
+                {!loading ? 'Sign Up' : 'Loading'}
+              </Button>
             </div>
           </form>
         </Form>
@@ -192,3 +210,13 @@ const SignUp = () => {
 };
 
 export default SignUp;
+
+function AlertDestructive() {
+  return (
+    <Alert variant='destructive'>
+      <AlertCircle className='h-4 w-4' />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription>Email is already in use.</AlertDescription>
+    </Alert>
+  );
+}

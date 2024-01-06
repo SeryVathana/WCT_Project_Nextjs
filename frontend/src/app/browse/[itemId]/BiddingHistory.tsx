@@ -58,6 +58,16 @@ const BiddingHistory = ({
       return;
     }
 
+    if (!user.isAuth) {
+      router.push('/sign-in');
+      return;
+    }
+
+    if (user.username == 'Guest') {
+      router.push('/sign-in');
+      return;
+    }
+
     const newUpdate = await axios.get(`${API_URL}/api/posts/${data?._id}`);
     const newUpdateData: ItemDataType = await newUpdate.data;
 
@@ -89,24 +99,30 @@ const BiddingHistory = ({
       setBidHistory((prev) => [...prev, reqBody]);
       setCurrentPrice((prev) => prev + values.bidPrice);
 
-      await axios
-        .get(`${API_URL}/user/${newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId}`)
-        .then((res: any) => {
-          const lastBidAmount = newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].price;
-          const lastBidder = res.data[0];
-          toast({
-            title: 'You just placed a bid.',
-            description: 'Good Luck!',
+      if (newUpdateData.biddingHistory.length != 0) {
+        await axios
+          .get(`${API_URL}/user/${newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId}`)
+          .then((res: any) => {
+            const lastBidAmount = newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].price;
+            const lastBidder = res.data[0];
+            console.log(lastBidder);
+
+            sendEmail(
+              lastBidder.email,
+              'Someone bid over you.',
+              lastBidder.displayName,
+              data.itemName,
+              lastBidAmount,
+              `https://auction-site-wct.vercel.app/browse/${data._id}`
+            ).catch((err) => {
+              console.log(err);
+            });
           });
-          sendEmail(
-            lastBidder.email,
-            'Someone bid over you.',
-            lastBidder.displayName,
-            data.itemName,
-            lastBidAmount,
-            `https://auction-site-wct.vercel.app/browse/${data._id}`
-          );
-        });
+      }
+      toast({
+        title: 'You just placed a bid.',
+        description: 'Good Luck!',
+      });
     });
   };
 
