@@ -3,12 +3,28 @@ import { EmailTemplate } from '@/components/EmailTemplate';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/configs/firebase-config';
+import { ItemDataType } from '@/types/types';
 import Link from 'next/link';
 
 const API_URL = 'https://auction-site-server.onrender.com';
+
 const getItem = async () => {
-  const data = await fetch(`${API_URL}/api/posts`, { cache: 'no-cache' });
-  return data.json();
+  const res = await fetch(`${API_URL}/api/posts`, { next: { revalidate: 10 } });
+  // The return value is *not* serialized
+  // You can return Date, Map, Set, etc.
+
+  if (!res.ok) {
+    // This will activate the closest `error.js` Error Boundary
+    throw new Error('Failed to fetch data');
+  } else {
+    return res.json();
+  }
+};
+
+export const preload = () => {
+  // void evaluates the given expression and returns undefined
+  // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/void
+  void getItem();
 };
 
 const Homepage = async () => {
