@@ -541,7 +541,7 @@ const UserPostsTab = () => {
   );
 };
 
-export function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
+function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
   const [category, setCategory] = useState<string>(data.category);
   const [endDate, setEndDate] = useState<string>('2023-01-01');
   const [endTime, setEndTime] = useState<string>('00:00');
@@ -730,7 +730,7 @@ export function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdi
   );
 }
 
-export function AlertDialogDemo({ id, setDeleted }: { id: string; setDeleted: Dispatch<SetStateAction<boolean>> }) {
+function AlertDialogDemo({ id, setDeleted }: { id: string; setDeleted: Dispatch<SetStateAction<boolean>> }) {
   const [open, setOpen] = useState<boolean>(false);
 
   const handleDelete = async (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
