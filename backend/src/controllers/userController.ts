@@ -47,3 +47,36 @@ export const createUser: RequestHandler<unknown, unknown, CreateUserBody, unknow
     res.status(409).send(err);
   }
 };
+
+type UpdateUserParams = {
+  id: string;
+};
+type UpdateUserBody = {
+  reqBody: {
+    firstName: string;
+    lastName: string;
+    birthDate: string;
+  };
+};
+
+export const updateUser: RequestHandler<UpdateUserParams, unknown, UpdateUserBody, unknown> = async (req, res) => {
+  const inputId = req.params.id;
+  try {
+    const user = await UserModel.findOne({ _id: inputId }).exec();
+
+    if (!user) {
+      throw Error('No post founded');
+    }
+
+    user.firstName = req.body.reqBody.firstName;
+    user.lastName = req.body.reqBody.lastName;
+    user.birthDate = new Date(req.body.reqBody.birthDate);
+
+    user.save();
+
+    console.log(user);
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+  }
+};

@@ -20,7 +20,7 @@ import { ItemDataType } from '@/types/types';
 import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Dispatch, MouseEvent, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, FormEvent, MouseEvent, SetStateAction, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -54,6 +54,7 @@ import { PRODUCT_CATEGORIES } from '@/data/List';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { hi } from 'date-fns/locale';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -108,14 +109,22 @@ type UserInfoType = {
 const ProfileTab = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
   const [userInfo, setUserInfo] = useState<UserInfoType>();
+  const [isEdited, setIsEdited] = useState<boolean>(false);
 
   useEffect(() => {
     if (user.isAuth) {
-      axios.get(`${API_URL}/user/${user.userID}`).then((res) => {
-        setUserInfo(res.data[0]);
-      });
+      axios
+        .get(`${API_URL}/user/${user.userID}`)
+        .then((res) => {
+          setUserInfo(res.data[0]);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
-  }, [user]);
+
+    setIsEdited(false);
+  }, [user, isEdited]);
 
   const giveDateTime = (inputDate: string | undefined) => {
     if (!inputDate) {
@@ -123,7 +132,7 @@ const ProfileTab = () => {
     }
 
     const today = new Date(inputDate);
-    const date = today.getDate() + '-' + (today.getMonth() + 1) + '-' + today.getFullYear();
+    const date = ('0' + today.getDate()).slice(-2) + '-' + ('0' + (today.getMonth() + 1)).slice(-2) + '-' + today.getFullYear();
     return date;
   };
 
@@ -160,7 +169,7 @@ const ProfileTab = () => {
           </TableBody>
         </Table>
         <div className='mt-5 flex gap-5'>
-          <Button variant={'outline'}>Change Infomation</Button>
+          <EditUserDialog data={userInfo!} setIsEdited={setIsEdited} />
           <Button variant={'destructive'}>Change Password</Button>
         </div>
       </div>
@@ -314,10 +323,10 @@ const MyPostsTab = () => {
                     </div>
                     <div className='flex gap-5'>
                       <div className='mt-5'>
-                        <DialogDemo data={item} setIsEdited={setIsEdited} />
+                        <EditPostDialog data={item} setIsEdited={setIsEdited} />
                       </div>
                       <div className='mt-5'>
-                        <AlertDialogDemo id={item._id} setDeleted={setDeleted} />
+                        <AlertEditPostDialog id={item._id} setDeleted={setDeleted} />
                       </div>
                     </div>
                     {!item.pending ? (
@@ -541,7 +550,94 @@ const UserPostsTab = () => {
   );
 };
 
-function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
+function EditUserDialog({ data, setIsEdited }: { data: UserInfoType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [birthDate, setBirthDate] = useState<string>('2000-01-01');
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setUploading(true);
+
+    const reqBody = {
+      firstName,
+      lastName,
+      birthDate: new Date(birthDate).toISOString(),
+    };
+
+    console.log(reqBody);
+
+    axios.patch(`${API_URL}/user/${data._id}`, { reqBody }).then(() => {
+      setIsEdited(true);
+      setOpen(false);
+    });
+
+    setUploading(false);
+  };
+
+  const getNormalDate = (date: string) => {
+    const endDay = ('0' + new Date().getDate()).slice(-2);
+    const endMonth = ('0' + new Date(date).getMonth() + 1).slice(-2);
+    const endYear = new Date(date).getFullYear();
+
+    const endDate = `${endYear}-${endMonth}-${endDay}`;
+
+    return endDate;
+  };
+
+  useEffect(() => {
+    setFirstName(data?.firstName);
+    setLastName(data?.lastName);
+    setBirthDate(getNormalDate(data?.birthDate));
+  }, [data]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant='default' onClick={() => setOpen(true)}>
+          Change Information
+        </Button>
+      </DialogTrigger>
+      <DialogContent className='sm:max-w-[600px] overflow-y-auto h-screen md:h-auto'>
+        <DialogHeader>
+          <DialogTitle>Change Your Info</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={(e) => handleSubmit(e)} className='space-y-5'>
+          <div className='grid grid-cols-4 items-center'>
+            <Label className=' col-span-1'>First Name</Label>
+            <Input type='text' value={firstName} onChange={(e) => setFirstName(e.target.value)} className=' col-span-3' />
+          </div>
+          <div className='grid grid-cols-4 items-center'>
+            <Label className=' col-span-1'>Last Name</Label>
+            <Input type='text' value={lastName} onChange={(e) => setLastName(e.target.value)} className=' col-span-3' />
+          </div>
+          <div className='grid grid-cols-4 items-center'>
+            <Label className=' col-span-1'>Birth Date</Label>
+            <Input
+              placeholder='End Date'
+              type='date'
+              value={birthDate}
+              onChange={(e) => {
+                setBirthDate(e.target.value);
+              }}
+              className='col-span-3'
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type='submit' disabled={uploading}>
+              {uploading ? 'Loading' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+function EditPostDialog({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
   const [category, setCategory] = useState<string>(data.category);
   const [endDate, setEndDate] = useState<string>('2023-01-01');
   const [endTime, setEndTime] = useState<string>('00:00');
@@ -730,7 +826,7 @@ function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Di
   );
 }
 
-function AlertDialogDemo({ id, setDeleted }: { id: string; setDeleted: Dispatch<SetStateAction<boolean>> }) {
+function AlertEditPostDialog({ id, setDeleted }: { id: string; setDeleted: Dispatch<SetStateAction<boolean>> }) {
   const [open, setOpen] = useState<boolean>(false);
 
   const handleDelete = async (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
@@ -748,7 +844,7 @@ function AlertDialogDemo({ id, setDeleted }: { id: string; setDeleted: Dispatch<
   };
 
   return (
-    <AlertDialog open={open}>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button variant='destructive' onClick={() => setOpen(true)}>
           Delete Forever
