@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 
 import { Toaster } from '@/components/ui/toaster';
 import { PRODUCT_CATEGORIES } from '@/data/List';
+import Loading from '../loading';
 
 type ImageResType = {
   storageFileName: string;
@@ -37,7 +38,7 @@ type ImageResType = {
   type: string;
 };
 
-const API_URL = 'https://auction-site-server.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const CreatePost = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
@@ -89,11 +90,6 @@ const CreatePost = () => {
       .string({ required_error: 'Please enter item description' })
       .min(2, 'Input must be atleast 2 characters.')
       .max(250),
-    location: z.object({
-      district: z.string({ required_error: 'Please enter bidding district' }).min(2).max(50),
-      city: z.string({ required_error: 'Please enter bidding city' }).min(2).max(50),
-      country: z.string({ required_error: 'Please enter bidding country' }).min(2).max(50),
-    }),
     initialPrice: z.coerce.number({ required_error: 'Please enter start price' }).int().min(1),
     bidIncrement: z.coerce
       .number({ required_error: 'Please enter bidding increment' })
@@ -106,11 +102,6 @@ const CreatePost = () => {
     defaultValues: {
       itemName: '',
       itemDescription: '',
-      location: {
-        district: '',
-        city: '',
-        country: '',
-      },
       initialPrice: Number(''),
       bidIncrement: Number(''),
     },
@@ -222,23 +213,21 @@ const CreatePost = () => {
 
     inputData.map((img) => {
       const Url = URL.createObjectURL(img);
+      console.log(Url);
+
       setOthersImage((prev) => [...prev, Url]);
     });
   };
 
   const handleDelete = async (inputData: any) => {
     setDisplayImage('');
-
     setDisplayFileImage('');
   };
   const handleDeleteOthers = async (inputData: any) => {
     const index = othersImage.findIndex((item) => item === inputData);
     setOthersImage((prev) => prev.filter((item) => item != inputData));
-    // setOthersFileImage((prev) => prev.splice(index));
     const data = othersFileImage;
-
     data.splice(index, 1);
-
     setOthersFileImage(data);
   };
 
@@ -257,6 +246,10 @@ const CreatePost = () => {
     };
   });
 
+  if (!user.isAuth) {
+    return <h1>Loading</h1>;
+  }
+
   return (
     <MaxWidthWrapper>
       <div className='max-w-[600px] mx-auto my-10'>
@@ -265,7 +258,7 @@ const CreatePost = () => {
         <div className='mt-5'>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-10'>
-              <div className=' space-y-12'>
+              <div className=' space-y-5'>
                 <FormField
                   control={form.control}
                   name='itemName'
@@ -393,47 +386,6 @@ const CreatePost = () => {
                     </SelectContent>
                   </Select>
                   {errorCategory && <p className='text-sm font-medium text-destructive'>Category is required</p>}
-                </div>
-                <div className='space-y-2'>
-                  <h1 className='text-md font-semibold'>Location</h1>
-                  <div className='flex gap-2'>
-                    <FormField
-                      control={form.control}
-                      name='location.district'
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <FormLabel>District</FormLabel>
-                          <FormControl>
-                            <Input placeholder='District' {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name='location.city'
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder='City' {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name='location.country'
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input placeholder='Country' {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
 
                 <FormField

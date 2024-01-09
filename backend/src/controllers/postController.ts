@@ -93,19 +93,12 @@ type BidHistoryType = {
   date?: Date;
 };
 
-type LocationType = {
-  country: string;
-  district: string;
-  city: string;
-};
-
 type CreatePostBody = {
   itemName?: string;
   itemDescription?: string;
   biddingHistory?: BidHistoryType[];
   initialPrice?: number;
   bidIncrement?: number;
-  location?: LocationType;
   category?: string;
   pending?: boolean;
   displayImg?: ImgType;
@@ -144,15 +137,26 @@ export const updatePost: RequestHandler<UpdatePostParams, unknown, any, unknown>
       throw Error('No post founded');
     }
 
+    console.log(req.body);
+
     if ('pending' in req.body) {
       post.pending = req.body.pending;
     } else if ('biddingHistory' in req.body) {
       post.biddingHistory.push(req.body.biddingHistory);
+    } else if ('changedInfo' in req.body) {
+      post.itemName = req.body.changedInfo.itemName;
+      post.itemDescription = req.body.changedInfo.itemDescription;
+      post.initialPrice = req.body.changedInfo.initialPrice;
+      post.bidIncrement = req.body.changedInfo.bidIncrement;
+      post.category = req.body.changedInfo.category;
+      post.endDate = req.body.changedInfo.endDate;
+      post.pending = req.body.changedInfo.pending;
     }
 
     const updatedPost = post.save();
 
     res.status(200).json(updatedPost);
+    // res.status(200);
   } catch (err) {
     console.log(err);
   }

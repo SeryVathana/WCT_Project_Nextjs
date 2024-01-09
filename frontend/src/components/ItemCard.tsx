@@ -39,7 +39,6 @@ export default function ItemCard({ data }: { data: ItemDataType }) {
           <Link href={`/browse/${data._id}`}>
             <CardTitle className='text-md sm:text-xl line-clamp-1'>{data.itemName}</CardTitle>
           </Link>
-          <p className='text-[12px] sm:text-sm text-muted-foreground line-clamp-1'>{`${data.location.district}, ${data.location.city}, ${data.location.country}`}</p>
           <p className='mt-2 text-[12px] sm:text-sm line-clamp-1'>Bid Increment: $ {data.bidIncrement.toLocaleString()}</p>
           <p className='text-[12px] sm:text-sm line-clamp-1'>
             Price: <span className='text-sm sm:text-lg font-semibold text-blue-500 line'>$ {currentPrice.toLocaleString()}</span>

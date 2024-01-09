@@ -7,7 +7,6 @@ const postSchema = new Schema(
     itemDescription: { type: String },
     initialPrice: { type: Number },
     bidIncrement: { type: Number },
-    location: { type: Object },
     category: { type: String },
     pending: { type: Boolean },
     displayImg: { type: Object },

@@ -46,4 +46,5 @@ export type ItemDataType = {
   endDate: Date;
   createdAt: Date;
   biddingHistory: BidHistoryType[];
+  currentPrice: number;
 };

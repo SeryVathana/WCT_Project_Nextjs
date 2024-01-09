@@ -2,53 +2,46 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { ItemDataType, BidHistoryType } from '@/types/types';
+import { BidHistoryType, ItemDataType } from '@/types/types';
 import { useForm } from 'react-hook-form';
 
-import { string, z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import axios from 'axios';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RootState } from '@/redux/store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { Item } from '@radix-ui/react-dropdown-menu';
 
-import { useToast } from '@/components/ui/use-toast';
-import { Toaster } from '@/components/ui/toaster';
-import { auth } from '@/configs/firebase-config';
-import { useRouter } from 'next/navigation';
 import { sendEmail } from '@/app/sendEmail';
+import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
+import { auth } from '@/configs/firebase-config';
 
-const API_URL = 'https://auction-site-server.onrender.com';
+import { useRouter } from 'next/navigation';
+import { z } from 'zod';
 
-const BiddingHistory = ({
-  data,
-  bidHistory,
-  setBidHistory,
-  setCurrentPrice,
-}: {
-  data: ItemDataType;
-  bidHistory: BidHistoryType[];
-  setBidHistory: Dispatch<SetStateAction<BidHistoryType[]>>;
-  setCurrentPrice: Dispatch<SetStateAction<number>>;
-}) => {
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const BiddingAction = ({ data }: { data: ItemDataType }) => {
   const user = useSelector((state: RootState) => state.authSlice.value);
   const { toast } = useToast();
   const router = useRouter();
-  // const [bidHistory, setBidHistory] = useState<BidHistoryType[]>(data?.biddingHistory);
+
+  const bidLowestPrice = data.biddingHistory.length
+    ? data.biddingHistory[data.biddingHistory.length - 1].price + data.bidIncrement
+    : data.initialPrice + data.bidIncrement;
+  const [bidPrice, setBidPrice] = useState<number>(bidLowestPrice);
 
   const formSchema = z.object({
-    bidPrice: z.coerce.number().min(data?.bidIncrement, {
-      message: 'Value must be equal or higher than bid increment.',
+    bidPrice: z.coerce.number().min(bidLowestPrice, {
+      message: `Value must be equal or higher than $${bidLowestPrice}.`,
     }),
   });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      bidPrice: 0,
+      bidPrice: bidPrice,
     },
   });
 
@@ -67,6 +60,12 @@ const BiddingHistory = ({
       router.push('/sign-in');
       return;
     }
+
+    if (bidPrice < bidLowestPrice) {
+      return;
+    }
+
+    console.log(bidPrice);
 
     const newUpdate = await axios.get(`${API_URL}/api/posts/${data?._id}`);
     const newUpdateData: ItemDataType = await newUpdate.data;
@@ -96,9 +95,6 @@ const BiddingHistory = ({
     };
 
     await axios.patch(`${API_URL}/api/posts/${data?._id}`, { biddingHistory: reqBody }).then(async () => {
-      setBidHistory((prev) => [...prev, reqBody]);
-      setCurrentPrice((prev) => prev + values.bidPrice);
-
       if (newUpdateData.biddingHistory.length != 0) {
         await axios
           .get(`${API_URL}/user/${newUpdateData.biddingHistory[newUpdateData.biddingHistory.length - 1].bidderId}`)
@@ -124,11 +120,13 @@ const BiddingHistory = ({
         description: 'Good Luck!',
       });
     });
+    setBidPrice((prev) => prev + data.bidIncrement);
+    router.refresh();
   };
 
   return (
     <div>
-      <BidTable list={bidHistory} />
+      <Toaster />
 
       {user.userID == data?.seller.id ? null : (
         <Form {...form}>
@@ -161,31 +159,4 @@ const BiddingHistory = ({
   );
 };
 
-const BidTable = ({ list }: { list: BidHistoryType[] }) => {
-  return (
-    <>
-      <h1 className='text-xl font-semibold mt-5 '>Bidding History</h1>
-
-      <div className='max-h-[300px] overflow-y-auto border my-5 rounded-sm'>
-        {list.length <= 0 && <h1 className='my-5 ml-5'>No bidder right now.</h1>}
-        <Table className=''>
-          <TableBody>
-            {list?.map((item: BidHistoryType, index) => {
-              return (
-                <TableRow key={index}>
-                  <TableCell className='font-medium'>{index + 1}</TableCell>
-                  <TableCell className='font-medium'>{item.bidder}</TableCell>
-                  <TableCell>$ {item.price.toLocaleString()}</TableCell>
-                  <TableCell>{new Date(item.date).toLocaleString('default', { hour12: true })}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <Toaster />
-      </div>
-    </>
-  );
-};
-
-export default BiddingHistory;
+export default BiddingAction;

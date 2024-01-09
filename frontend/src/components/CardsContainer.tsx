@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import ItemCardSkeleton from './ItemCardSkeleton';
 
-const API_URL = 'https://auction-site-server.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const CardsContainer = ({
   inputData = [],

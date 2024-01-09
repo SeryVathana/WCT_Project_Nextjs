@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { auth } from '@/configs/firebase-config';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
@@ -19,10 +19,12 @@ import axios from 'axios';
 import { logIn } from '@/redux/features/auth-slice';
 import { useDispatch } from 'react-redux';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Search } from 'lucide-react';
+import { AlertCircle, Search, Upload } from 'lucide-react';
 import { sendEmail } from '../sendEmail';
+import Image from 'next/image';
+import { log } from 'console';
 
-const API_URL = 'https://auction-site-server.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const formSchema = z.object({
   firstname: z.string().min(2).max(10),
@@ -34,6 +36,8 @@ const formSchema = z.object({
 const SignUp = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const [profileImgURL, setProfileImgURL] = useState<string>('');
+  const [profileImgFile, setProfileImgFile] = useState<File>();
   const [birthDate, setBirthDate] = useState<string>('');
   const [errorBirthDate, setErrorBirthDate] = useState<boolean>(false);
   const [emailError, setEmailError] = useState<boolean>(false);
@@ -66,12 +70,21 @@ const SignUp = () => {
       setLoading(true);
     }
 
+    const uploadImg = await axios.post(
+      `${API_URL}/upload`,
+      { filename: profileImgFile },
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
     await createUserWithEmailAndPassword(auth, values.email, values.password)
       .then(async (newUser) => {
         const reqBody = {
           ...values,
-          photoURL:
-            'https://www2.deloitte.com/content/dam/Deloitte/nl/Images/promo_images/deloitte-nl-cm-digital-human-promo.jpg',
+          photoURL: await uploadImg.data.downloadURL,
           birthDate: new Date(birthDate).toISOString(),
           uid: newUser.user.uid,
           isModerator: false,
@@ -98,11 +111,33 @@ const SignUp = () => {
     setLoading(false);
   }
 
+  const handleUploadImg = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const url = URL.createObjectURL(e.target.files![0]);
+
+    setProfileImgURL(url);
+    setProfileImgFile(e.target.files![0]);
+  };
+
   return (
     <MaxWidthWrapper className='flex items-center justify-center min-h-[80vh] my-10'>
       <div className='w-[90%] md:w-[500px] xl:w-[500px]'>
         <h1 className='text-center text-3xl font-semibold'>Create an account</h1>
-        <h1 className='text-center text-2xl font-semibold my-5'>Join us now</h1>
+        <div className='flex flex-col items-center my-10 overflow-hidden'>
+          <label
+            htmlFor='dropzone-file'
+            className=' overflow-hidden flex flex-col items-center justify-center w-32 h-32 border-2 mx-auto border-gray-300  rounded-full cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600'
+          >
+            {profileImgURL ? (
+              <Image src={profileImgURL} alt='s' width={100} height={100} className='w-full h-full object-cover' />
+            ) : (
+              <Upload className=' text-muted-foreground' />
+            )}
+            <input id='dropzone-file' type='file' className='hidden' onChange={(e) => handleUploadImg(e)} />
+          </label>
+          <p className='text-lg font-semibold mt-5'>Profile Picture</p>
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4 '>

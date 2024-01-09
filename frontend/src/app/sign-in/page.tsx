@@ -19,7 +19,7 @@ import { auth } from '../../configs/firebase-config';
 
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { sendEmail } from '../sendEmail';
+import { logIn } from '@/redux/features/auth-slice';
 
 const SignIn = () => {
   const router = useRouter();
@@ -43,19 +43,19 @@ const SignIn = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(false);
     await signInWithEmailAndPassword(auth, values.email, values.password)
-      .then((res) => {})
+      .then((res) => {
+        auth.onAuthStateChanged(async (userCred) => {
+          if (userCred) {
+            router.push('/');
+          }
+        });
+      })
       .catch((err) => {
         setError(true);
       });
   };
 
-  useEffect(() => {
-    auth.onAuthStateChanged(async (userCred) => {
-      if (userCred) {
-        router.push('/');
-      }
-    });
-  });
+  useEffect(() => {}, []);
 
   return (
     <MaxWidthWrapper className='flex items-center justify-center min-h-[80vh]'>

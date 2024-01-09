@@ -20,8 +20,10 @@ import { ItemDataType } from '@/types/types';
 import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Dispatch, MouseEvent, SetStateAction, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import {
   Dialog,
@@ -32,14 +34,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Item } from 'firebase/analytics';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PRODUCT_CATEGORIES } from '@/data/List';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-const API_URL = 'https://auction-site-server.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
@@ -155,14 +171,18 @@ const ProfileTab = () => {
 const MyPostsTab = () => {
   const user = useSelector((state: RootState) => state.authSlice.value);
   const [data, setData] = useState<ItemDataType[]>([]);
+  const [deleted, setDeleted] = useState<boolean>(false);
 
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEdited, setIsEdited] = useState<boolean>(false);
 
   useEffect(() => {
     if (auth.currentUser) {
       axios.get(`${API_URL}/api/posts/mypost/${user.userID}`).then((res) => setData(res.data));
     }
-  }, [user.userID]);
+
+    setIsEdited(false);
+    setDeleted(false);
+  }, [user.userID, deleted, isEdited]);
 
   return (
     <div className='grid grid-cols-12 gap-5 mt-5'>
@@ -254,18 +274,12 @@ const MyPostsTab = () => {
                           <TableCell>{item.category}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className='font-medium'>Location</TableCell>
-                          <TableCell>
-                            {item.location.district + ', ' + item.location.city + ', ' + item.location.country}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
                           <TableCell className='font-medium'>Start Date: </TableCell>
                           <TableCell>{new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>End Date</TableCell>
-                          <TableCell>{new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
+                          <TableCell>{new Date(item.endDate).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className='font-medium'>Start Price</TableCell>
@@ -298,16 +312,19 @@ const MyPostsTab = () => {
                         <p className=' text-muted-foreground'>{item.itemDescription}</p>
                       </div>
                     </div>
-                    {!item.pending ? (
+                    <div className='flex gap-5'>
                       <div className='mt-5'>
-                        <h1 className='text-md mb-3 text-destructive'>
-                          Your post has been accepted. You can not change right now.
-                        </h1>
-                        <Button>Request for change</Button>
+                        <DialogDemo data={item} setIsEdited={setIsEdited} />
                       </div>
-                    ) : (
-                      <div className='mt-5'>{/* <DialogDemo data={item} /> */}</div>
-                    )}
+                      <div className='mt-5'>
+                        <AlertDialogDemo id={item._id} setDeleted={setDeleted} />
+                      </div>
+                    </div>
+                    {!item.pending ? (
+                      <h1 className='text-md mt-3 text-destructive'>
+                        Warning: After changed, your post will back to pending state.
+                      </h1>
+                    ) : null}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -451,12 +468,6 @@ const UserPostsTab = () => {
                           <TableCell>{item.category}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className='font-medium'>Location</TableCell>
-                          <TableCell>
-                            {item.location.district + ', ' + item.location.city + ', ' + item.location.country}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
                           <TableCell className='font-medium'>Post Date: </TableCell>
                           <TableCell> {new Date(item.createdAt).toLocaleString('default', { hour12: true })}</TableCell>
                         </TableRow>
@@ -478,7 +489,7 @@ const UserPostsTab = () => {
                   <div className=' col-span-2 md:col-span-1'>
                     <div className='col-span-2 md:col-span-1 row-span-3 mt-5 md:mt-0'>
                       <div className='flex items-center gap-3 mb-2'>
-                        <Avatar>
+                        <Avatar className='border'>
                           <AvatarImage src={item.seller.pfImgURL} className=' object-cover' />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
@@ -499,11 +510,11 @@ const UserPostsTab = () => {
                         <div className='flex mt-10 gap-5'>
                           {item.pending ? (
                             <Button className='' onClick={() => handleAccept(item)}>
-                              Accept
+                              Set Public
                             </Button>
                           ) : (
                             <Button variant={'destructive'} onClick={() => handleRemove(item)}>
-                              Remove
+                              Set Private
                             </Button>
                           )}
                         </div>
@@ -530,55 +541,233 @@ const UserPostsTab = () => {
   );
 };
 
-// export function DialogDemo({ data }: { data: ItemDataType }) {
-//   return (
-//     <Dialog>
-//       <DialogTrigger asChild>
-//         <Button variant='outline'>Edit</Button>
-//       </DialogTrigger>
-//       <DialogContent className='sm:max-w-[600px]'>
-//         <DialogHeader>
-//           <DialogTitle>Edit Item</DialogTitle>
-//         </DialogHeader>
-//         <div className='grid gap-4 py-4'>
-//           <div className='grid grid-cols-4 items-center gap-4'>
-//             <Label htmlFor='name' className='text-right'>
-//               Item Name
-//             </Label>
-//             <Input id='name' defaultValue={data.itemName} className='col-span-3' />
-//           </div>
-//           <div className='grid grid-cols-4 items-center gap-4'>
-//             <Label htmlFor='username' className='text-right'>
-//               Description
-//             </Label>
-//             <Textarea id='username' defaultValue={data.itemDescription} className='col-span-3' />
-//           </div>
-//           <div className='grid grid-cols-4 items-center gap-4'>
-//             <Label htmlFor='username' className='text-right'>
-//               Category
-//             </Label>
-//             <Select defaultValue={data.category}>
-//               <SelectTrigger className='col-span-3'>
-//                 <SelectValue placeholder='Pick a category' />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
-//                   return (
-//                     <SelectItem key={cate} value={cate.toLowerCase()}>
-//                       {cate}
-//                     </SelectItem>
-//                   );
-//                 })}
-//               </SelectContent>
-//             </Select>
-//           </div>
-//         </div>
-//         <DialogFooter>
-//           <Button type='submit'>Save changes</Button>
-//         </DialogFooter>
-//       </DialogContent>
-//     </Dialog>
-//   );
-// }
+export function DialogDemo({ data, setIsEdited }: { data: ItemDataType; setIsEdited: Dispatch<SetStateAction<boolean>> }) {
+  const [category, setCategory] = useState<string>(data.category);
+  const [endDate, setEndDate] = useState<string>('2023-01-01');
+  const [endTime, setEndTime] = useState<string>('00:00');
+  const [uploading, setUploading] = useState<boolean>(false);
+
+  const formSchema = z.object({
+    itemName: z.string({ required_error: 'Please enter item name' }).min(2, 'Input must be atleast 2 characters.').max(50),
+    itemDescription: z
+      .string({ required_error: 'Please enter item description' })
+      .min(2, 'Input must be atleast 2 characters.')
+      .max(250),
+    initialPrice: z.coerce.number({ required_error: 'Please enter start price' }).int().min(1),
+    bidIncrement: z.coerce
+      .number({ required_error: 'Please enter bidding increment' })
+      .int({ message: 'Number must be integer' })
+      .min(1),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      itemName: data.itemName,
+      itemDescription: data.itemDescription,
+      initialPrice: Number(data.initialPrice),
+      bidIncrement: Number(data.bidIncrement),
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setUploading(true);
+
+    console.log(values);
+    const endDateTime = new Date(endDate + ' ' + endTime).toISOString();
+
+    axios.patch(`${API_URL}/api/posts/${data._id}`, {
+      changedInfo: { ...values, category: category, endDate: endDateTime, pending: true },
+    });
+
+    setUploading(false);
+    setIsEdited(true);
+  };
+
+  const getEndDate = () => {
+    const endDay = ('0' + new Date(data.endDate).getDate()).slice(-2);
+    const endMonth = ('0' + new Date(data.endDate).getMonth() + 1).slice(-2);
+    const endYear = new Date(data.endDate).getFullYear();
+
+    const endDate = `${endYear}-${endMonth}-${endDay}`;
+
+    return endDate;
+  };
+
+  const getEndTime = () => {
+    const endHour = ('0' + new Date(data.endDate).getHours()).slice(-2);
+    const endMinute = ('0' + new Date(data.endDate).getMinutes()).slice(-2);
+    return endHour + ':' + endMinute;
+  };
+
+  useEffect(() => {
+    setEndDate(String(getEndDate()));
+    setEndTime(String(getEndTime()));
+  }, []);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant='default'>Edit</Button>
+      </DialogTrigger>
+      <DialogContent className='sm:max-w-[600px] overflow-y-auto h-screen md:h-auto'>
+        <DialogHeader>
+          <DialogTitle>Edit Item</DialogTitle>
+        </DialogHeader>
+        <div className='grid gap-4 py-4'>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
+              <FormField
+                control={form.control}
+                name='itemName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Item name' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='itemDescription'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder='Enter your description here.' {...field} />
+                    </FormControl>
+                    <FormDescription>Maximum 120 words.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className='space-y-2'>
+                <Label>Category</Label>
+                <Select defaultValue={data.category} onValueChange={(e) => setCategory(e)}>
+                  <SelectTrigger className='col-span-3'>
+                    <SelectValue placeholder='Pick a category' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_CATEGORIES.slice(1, PRODUCT_CATEGORIES.length).map((cate) => {
+                      return (
+                        <SelectItem key={cate} value={cate.toLowerCase()}>
+                          {cate}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <FormField
+                control={form.control}
+                name='initialPrice'
+                render={({ field }) => (
+                  <FormItem className='flex-1'>
+                    <FormLabel>Start Price</FormLabel>
+                    <FormControl>
+                      <div className='relative'>
+                        <Input placeholder='Start price' type='number' {...field} className='pl-8 ' />
+                        <span className='absolute -translate-y-1/2 top-1/2 left-3 text-muted-foreground'>$</span>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='bidIncrement'
+                render={({ field }) => (
+                  <FormItem className='flex-1'>
+                    <FormLabel>Bid Increment</FormLabel>
+                    <FormControl>
+                      <div className='relative'>
+                        <Input placeholder='Bid Increment' type='number' {...field} className='pl-8 ' />
+                        <span className='absolute -translate-y-1/2 top-1/2 left-3 text-muted-foreground'>$</span>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='space-y-2'>
+                <Label>End Date and Time</Label>
+                <div className='grid grid-cols-5 gap-2'>
+                  <Input
+                    placeholder='End Date'
+                    type='date'
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                    }}
+                    className='col-span-3'
+                  />
+                  <Input
+                    placeholder='End Date'
+                    type='time'
+                    value={endTime}
+                    onChange={(e) => {
+                      setEndTime(e.target.value);
+                    }}
+                    className='col-span-2'
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type='submit' disabled={uploading}>
+                  {uploading ? 'Loading' : 'Save Changes'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function AlertDialogDemo({ id, setDeleted }: { id: string; setDeleted: Dispatch<SetStateAction<boolean>> }) {
+  const [open, setOpen] = useState<boolean>(false);
+
+  const handleDelete = async (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
+    e.preventDefault();
+    console.log('Delete');
+
+    axios.delete(`${API_URL}/api/posts/${id}`).then((res) => {
+      console.log(res);
+
+      console.log('Deleted');
+
+      setOpen(false);
+      setDeleted(true);
+    });
+  };
+
+  return (
+    <AlertDialog open={open}>
+      <AlertDialogTrigger asChild>
+        <Button variant='destructive' onClick={() => setOpen(true)}>
+          Delete Forever
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your item and remove the data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => handleDelete(e)}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export default Profile;
