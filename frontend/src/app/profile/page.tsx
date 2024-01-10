@@ -55,6 +55,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { hi } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -556,9 +557,22 @@ function EditUserDialog({ data, setIsEdited }: { data: UserInfoType; setIsEdited
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [birthDate, setBirthDate] = useState<string>('2000-01-01');
+  const [errorFirstName, setErrorFirstName] = useState<boolean>(false);
+  const [errorLastName, setErrorLastName] = useState<boolean>(false);
+  const [errorBirthDate, setErrorBirthDate] = useState<boolean>(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    setErrorFirstName(firstName.trim().length < 3);
+    setErrorLastName(lastName.trim().length < 3);
+
+    const birthYear = new Date(birthDate).getFullYear();
+    setErrorBirthDate(2024 - birthYear < 18);
+
+    if (firstName.trim().length < 3 || lastName.trim().length < 3) return;
+    if (2024 - birthYear < 18) return;
+
     setUploading(true);
 
     const reqBody = {
@@ -608,11 +622,22 @@ function EditUserDialog({ data, setIsEdited }: { data: UserInfoType; setIsEdited
         <form onSubmit={(e) => handleSubmit(e)} className='space-y-5'>
           <div className='grid grid-cols-4 items-center'>
             <Label className=' col-span-1'>First Name</Label>
-            <Input type='text' value={firstName} onChange={(e) => setFirstName(e.target.value)} className=' col-span-3' />
+
+            <Input
+              type='text'
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className={cn('col-span-3', { 'border border-red-500': errorFirstName })}
+            />
           </div>
           <div className='grid grid-cols-4 items-center'>
             <Label className=' col-span-1'>Last Name</Label>
-            <Input type='text' value={lastName} onChange={(e) => setLastName(e.target.value)} className=' col-span-3' />
+            <Input
+              type='text'
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className={cn('col-span-3', { 'border border-red-500': errorLastName })}
+            />
           </div>
           <div className='grid grid-cols-4 items-center'>
             <Label className=' col-span-1'>Birth Date</Label>
@@ -623,7 +648,7 @@ function EditUserDialog({ data, setIsEdited }: { data: UserInfoType; setIsEdited
               onChange={(e) => {
                 setBirthDate(e.target.value);
               }}
-              className='col-span-3'
+              className={cn('col-span-3', { 'border border-red-500': errorBirthDate })}
             />
           </div>
 

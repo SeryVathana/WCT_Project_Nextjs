@@ -26,6 +26,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { logIn, logOut } from '@/redux/features/auth-slice';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/configs/firebase-config';
+import { useAuth } from '@/customHooks/useAuth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -49,6 +50,7 @@ const NAVLINK = [
 ];
 
 const NavActions = () => {
+  useAuth();
   const user = useSelector((state: RootState) => state.authSlice.value);
 
   const router = useRouter();
@@ -59,29 +61,6 @@ const NavActions = () => {
     dispatch(logOut());
     signOut(auth);
   };
-
-  useEffect(() => {
-    auth.onAuthStateChanged(async (userCred) => {
-      if (userCred) {
-        const token = await userCred.getIdToken();
-        const userRes = await axios.get(`${API_URL}/user/${userCred.uid}`);
-        const userData = await userRes.data[0];
-        if (userData) {
-          dispatch(
-            logIn({
-              uid: userCred.uid,
-              username: userData.lastName + ' ' + userData.firstName,
-              email: userData.email,
-              token: token,
-              pfURL: userData.photoURL,
-              isModerator: userData.isModerator,
-            })
-          );
-          localStorage.setItem('auth', 'true');
-        }
-      }
-    });
-  }, []);
 
   return (
     <>

@@ -51,7 +51,7 @@ const SignIn = () => {
         });
       })
       .catch((err) => {
-        setError(true);
+        setError(err);
       });
   };
 

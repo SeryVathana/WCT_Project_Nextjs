@@ -1,11 +1,7 @@
-import { auth } from '@/configs/firebase-config';
-
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 import MaxWidthWrapper from './MaxWidthWrapper';
 
-import { getServerSession } from 'next-auth';
 import NavActions from './NavActions';
 
 const NAVLINK = [

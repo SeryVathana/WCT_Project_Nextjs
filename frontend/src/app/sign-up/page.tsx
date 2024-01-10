@@ -6,23 +6,21 @@ import * as z from 'zod';
 
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ChangeEvent, useEffect, useState } from 'react';
-import { auth } from '@/configs/firebase-config';
-import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { Label } from '@/components/ui/label';
-import axios from 'axios';
+import { auth } from '@/configs/firebase-config';
 import { logIn } from '@/redux/features/auth-slice';
-import { useDispatch } from 'react-redux';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Search, Upload } from 'lucide-react';
-import { sendEmail } from '../sendEmail';
+import axios from 'axios';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { AlertCircle, Upload } from 'lucide-react';
 import Image from 'next/image';
-import { log } from 'console';
+import { useRouter } from 'next/navigation';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
